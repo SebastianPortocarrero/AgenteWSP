@@ -14,6 +14,13 @@ export interface Message {
   status?: 'sent' | 'delivered' | 'read' | 'pending_approval' | 'approved' | 'rejected';
 }
 
+export interface PendingResponse {
+  id: string;
+  content: string;
+  timestamp: number;
+  is_error?: boolean;
+}
+
 export interface Conversation {
   id: string;
   user: User;
@@ -24,6 +31,7 @@ export interface Conversation {
   unreadCount: number;
   tags: string[];
   assignedOperator?: string;
+  pending_response?: PendingResponse | null;
 }
 
 export interface QuickResponse {

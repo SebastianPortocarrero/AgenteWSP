@@ -3,19 +3,28 @@ import { Conversation, Message, SenderMode } from '../types';
 import { Bot, User, Edit3, Send, Check, Clock, CheckCheck, Smile, Paperclip } from 'lucide-react';
 import EmojiPicker from './EmojiPicker';
 import FileUpload from './FileUpload';
+import PendingResponseCard from './PendingResponseCard';
 
 interface ChatAreaProps {
   conversation: Conversation | null;
   senderMode: SenderMode;
   onSendMessage: (content: string, sender: SenderMode) => void;
   onEditMessage: (messageId: string, newContent: string) => void;
+  onApprovePendingResponse?: (conversationId: string) => void;
+  onRejectPendingResponse?: (conversationId: string) => void;
+  onEditAndApprovePendingResponse?: (conversationId: string, newContent: string) => void;
+  isLoadingPendingResponse?: boolean;
 }
 
 const ChatArea: React.FC<ChatAreaProps> = ({
   conversation,
   senderMode,
   onSendMessage,
-  onEditMessage
+  onEditMessage,
+  onApprovePendingResponse,
+  onRejectPendingResponse,
+  onEditAndApprovePendingResponse,
+  isLoadingPendingResponse = false
 }) => {
   const [newMessage, setNewMessage] = useState('');
   const [editingMessage, setEditingMessage] = useState<string | null>(null);
@@ -227,6 +236,20 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         ))}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Respuesta Pendiente (Modo Híbrido) */}
+      {conversation.pending_response && (
+        <div className="px-4 pb-2">
+          <PendingResponseCard
+            conversationId={conversation.id}
+            pendingResponse={conversation.pending_response}
+            onApprove={() => onApprovePendingResponse?.(conversation.id)}
+            onReject={() => onRejectPendingResponse?.(conversation.id)}
+            onEditAndApprove={(newContent) => onEditAndApprovePendingResponse?.(conversation.id, newContent)}
+            isLoading={isLoadingPendingResponse}
+          />
+        </div>
+      )}
 
       {/* Área de input */}
       <div className="bg-white border-t border-gray-200 p-4">

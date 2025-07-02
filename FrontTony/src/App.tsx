@@ -317,6 +317,83 @@ function App() {
     setActiveFilters(filters);
   };
 
+  // Funciones para manejar respuestas pendientes del modo híbrido
+  const [isLoadingPendingResponse, setIsLoadingPendingResponse] = useState(false);
+
+  const handleApprovePendingResponse = useCallback(async (conversationId: string) => {
+    if (!isConnected) return;
+    
+    setIsLoadingPendingResponse(true);
+    try {
+      const message = await apiService.approvePendingResponse(conversationId);
+      
+      // Actualizar conversaciones: agregar mensaje y limpiar respuesta pendiente
+      setConversations(prev => prev.map(conv =>
+        conv.id === conversationId
+          ? { 
+              ...conv, 
+              messages: [...conv.messages, message],
+              pending_response: null
+            }
+          : conv
+      ));
+      
+      console.log('Respuesta pendiente aprobada y enviada');
+    } catch (error) {
+      console.error('Error aprobando respuesta pendiente:', error);
+    } finally {
+      setIsLoadingPendingResponse(false);
+    }
+  }, [isConnected]);
+
+  const handleRejectPendingResponse = useCallback(async (conversationId: string) => {
+    if (!isConnected) return;
+    
+    setIsLoadingPendingResponse(true);
+    try {
+      await apiService.rejectPendingResponse(conversationId);
+      
+      // Limpiar respuesta pendiente
+      setConversations(prev => prev.map(conv =>
+        conv.id === conversationId
+          ? { ...conv, pending_response: null }
+          : conv
+      ));
+      
+      console.log('Respuesta pendiente rechazada');
+    } catch (error) {
+      console.error('Error rechazando respuesta pendiente:', error);
+    } finally {
+      setIsLoadingPendingResponse(false);
+    }
+  }, [isConnected]);
+
+  const handleEditAndApprovePendingResponse = useCallback(async (conversationId: string, newContent: string) => {
+    if (!isConnected) return;
+    
+    setIsLoadingPendingResponse(true);
+    try {
+      const message = await apiService.editAndApprovePendingResponse(conversationId, newContent);
+      
+      // Actualizar conversaciones: agregar mensaje editado y limpiar respuesta pendiente
+      setConversations(prev => prev.map(conv =>
+        conv.id === conversationId
+          ? { 
+              ...conv, 
+              messages: [...conv.messages, message],
+              pending_response: null
+            }
+          : conv
+      ));
+      
+      console.log('Respuesta pendiente editada, aprobada y enviada');
+    } catch (error) {
+      console.error('Error editando y aprobando respuesta pendiente:', error);
+    } finally {
+      setIsLoadingPendingResponse(false);
+    }
+  }, [isConnected]);
+
   // Mostrar login si no está autenticado
   if (!isAuthenticated) {
     return (
@@ -526,6 +603,10 @@ function App() {
                 senderMode={senderMode}
                 onSendMessage={handleSendMessage}
                 onEditMessage={handleEditMessage}
+                onApprovePendingResponse={handleApprovePendingResponse}
+                onRejectPendingResponse={handleRejectPendingResponse}
+                onEditAndApprovePendingResponse={handleEditAndApprovePendingResponse}
+                isLoadingPendingResponse={isLoadingPendingResponse}
               />
             )}
           </div>
