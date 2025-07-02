@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Bot, User, Check } from 'lucide-react';
+import { Bot, User, Check, GitMerge } from 'lucide-react';
 
 interface ConversationModeToggleProps {
-  currentMode: 'auto' | 'manual';
+  currentMode: 'auto' | 'manual' | 'hybrid';
   conversationId: string;
-  onModeChange: (mode: 'auto' | 'manual') => void;
+  onModeChange: (mode: 'auto' | 'manual' | 'hybrid') => void;
   disabled?: boolean;
 }
 
@@ -16,7 +16,7 @@ const ConversationModeToggle: React.FC<ConversationModeToggleProps> = ({
 }) => {
   const [isChanging, setIsChanging] = useState(false);
 
-  const handleModeChange = async (newMode: 'auto' | 'manual') => {
+  const handleModeChange = async (newMode: 'auto' | 'manual' | 'hybrid') => {
     if (isChanging || newMode === currentMode) return;
     
     setIsChanging(true);
@@ -34,9 +34,16 @@ const ConversationModeToggle: React.FC<ConversationModeToggleProps> = ({
         <div className={`px-2 py-1 rounded-full text-xs font-medium ${
           currentMode === 'auto' 
             ? 'bg-blue-100 text-blue-700' 
-            : 'bg-green-100 text-green-700'
+            : currentMode === 'manual'
+            ? 'bg-green-100 text-green-700'
+            : 'bg-purple-100 text-purple-700'
         }`}>
-          {currentMode === 'auto' ? '🤖 Bot activo' : '👤 Operador activo'}
+          {currentMode === 'auto' 
+            ? '🤖 Bot activo' 
+            : currentMode === 'manual'
+            ? '👤 Operador activo'
+            : '🤖👤 Híbrido activo'
+          }
         </div>
       </div>
       
@@ -88,6 +95,30 @@ const ConversationModeToggle: React.FC<ConversationModeToggleProps> = ({
           </div>
           {currentMode === 'manual' && <Check className="w-5 h-5" />}
         </button>
+
+        {/* Modo Híbrido */}
+        <button
+          onClick={() => handleModeChange('hybrid')}
+          disabled={disabled || isChanging}
+          className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all duration-200 ${
+            currentMode === 'hybrid'
+              ? 'bg-purple-50 border-purple-500 text-purple-700'
+              : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+          } ${disabled || isChanging ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+        >
+          <div className="flex items-center space-x-3">
+            <div className={`p-2 rounded-full ${
+              currentMode === 'hybrid' ? 'bg-purple-100' : 'bg-gray-100'
+            }`}>
+              <GitMerge className="w-4 h-4" />
+            </div>
+            <div className="text-left">
+              <div className="font-medium text-sm">🤖👤 Modo Híbrido</div>
+              <div className="text-xs opacity-75">Bot genera respuesta, operador la aprueba</div>
+            </div>
+          </div>
+          {currentMode === 'hybrid' && <Check className="w-5 h-5" />}
+        </button>
       </div>
       
       {/* Estado de cambio */}
@@ -105,7 +136,9 @@ const ConversationModeToggle: React.FC<ConversationModeToggleProps> = ({
         <p className="text-xs text-gray-600">
           {currentMode === 'auto' 
             ? '💡 En modo Bot: Los mensajes de WhatsApp se responden automáticamente. Puedes editar las respuestas desde aquí.'
-            : '💡 En modo Operador: El Bot no responderá automáticamente. Solo tú puedes enviar mensajes desde esta web.'
+            : currentMode === 'manual'
+            ? '💡 En modo Operador: El Bot no responderá automáticamente. Solo tú puedes enviar mensajes desde esta web.'
+            : '💡 En modo Híbrido: El Bot genera respuestas automáticamente pero NO las envía. Tú debes aprobarlas antes de enviar a WhatsApp.'
           }
         </p>
       </div>

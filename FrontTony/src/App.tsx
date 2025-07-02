@@ -284,7 +284,7 @@ function App() {
     }
   }, [isConnected]);
 
-  const handleModeChange = useCallback(async (mode: 'auto' | 'manual') => {
+  const handleModeChange = useCallback(async (mode: 'auto' | 'manual' | 'hybrid') => {
     if (!selectedConversationId) return;
 
     // Actualizar el modo localmente SIEMPRE
@@ -298,13 +298,13 @@ function App() {
     if (isConnected) {
       try {
         await apiService.changeConversationMode(selectedConversationId, mode, 'operator1');
-        console.log('Modo sincronizado con el backend');
+        console.log(`Modo ${mode} sincronizado con el backend`);
       } catch (error) {
         console.error('Error syncing mode with backend:', error);
         // El cambio local ya se aplicó, así que no revertimos
       }
     } else {
-      console.log('Modo cambiado localmente (sin conexión)');
+      console.log(`Modo ${mode} cambiado localmente (sin conexión)`);
     }
   }, [selectedConversationId, isConnected]);
 

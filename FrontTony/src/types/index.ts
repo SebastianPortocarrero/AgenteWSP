@@ -11,7 +11,7 @@ export interface Message {
   timestamp: Date;
   sender: 'user' | 'bot' | 'operator';
   edited?: boolean;
-  status?: 'sent' | 'delivered' | 'read';
+  status?: 'sent' | 'delivered' | 'read' | 'pending_approval' | 'approved' | 'rejected';
 }
 
 export interface Conversation {
@@ -19,7 +19,7 @@ export interface Conversation {
   user: User;
   messages: Message[];
   status: 'pending' | 'in_progress' | 'closed';
-  mode: 'auto' | 'manual';
+  mode: 'auto' | 'manual' | 'hybrid';
   lastActivity: Date;
   unreadCount: number;
   tags: string[];
