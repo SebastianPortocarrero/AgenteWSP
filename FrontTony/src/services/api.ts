@@ -101,20 +101,25 @@ class ApiService {
   }
 
   // Nuevos métodos para el modo híbrido
-  async approveMessage(messageId: string): Promise<void> {
-    await this.request(`/messages/${messageId}/approve`, {
+  async approvePendingResponse(conversationId: string): Promise<Message> {
+    const response = await this.request<{ message: any }>(`/conversations/${conversationId}/pending-response/approve`, {
+      method: 'POST'
+    });
+
+    return {
+      ...response.message,
+      timestamp: new Date(response.message.timestamp * 1000)
+    };
+  }
+
+  async rejectPendingResponse(conversationId: string): Promise<void> {
+    await this.request(`/conversations/${conversationId}/pending-response/reject`, {
       method: 'POST'
     });
   }
 
-  async rejectMessage(messageId: string): Promise<void> {
-    await this.request(`/messages/${messageId}/reject`, {
-      method: 'POST'
-    });
-  }
-
-  async editAndApproveMessage(messageId: string, newContent: string): Promise<Message> {
-    const response = await this.request<{ message: any }>(`/messages/${messageId}/edit-and-approve`, {
+  async editAndApprovePendingResponse(conversationId: string, newContent: string): Promise<Message> {
+    const response = await this.request<{ message: any }>(`/conversations/${conversationId}/pending-response/edit-and-approve`, {
       method: 'PUT',
       body: JSON.stringify({
         content: newContent
