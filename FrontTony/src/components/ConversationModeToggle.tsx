@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bot, User, Settings, Check } from 'lucide-react';
+import { Bot, User, Check } from 'lucide-react';
 
 interface ConversationModeToggleProps {
   currentMode: 'auto' | 'manual';
@@ -27,90 +27,70 @@ const ConversationModeToggle: React.FC<ConversationModeToggleProps> = ({
     }
   };
 
-  const getModeIcon = (mode: 'auto' | 'manual') => {
-    switch (mode) {
-      case 'auto':
-        return <Bot className="w-4 h-4" />;
-      case 'manual':
-        return <User className="w-4 h-4" />;
-      default:
-        return null;
-    }
-  };
-
-  const getModeColor = (mode: 'auto' | 'manual', isActive: boolean) => {
-    const baseClasses = "flex items-center space-x-2 px-3 py-2 rounded-lg border transition-all duration-200";
-    
-    if (isActive) {
-      switch (mode) {
-        case 'auto':
-          return `${baseClasses} bg-blue-500 text-white border-blue-500`;
-        case 'manual':
-          return `${baseClasses} bg-green-500 text-white border-green-500`;
-        default:
-          return baseClasses;
-      }
-    } else {
-      return `${baseClasses} bg-white text-gray-700 border-gray-300 hover:border-gray-400 hover:bg-gray-50`;
-    }
-  };
-
-  const getModeLabel = (mode: 'auto' | 'manual') => {
-    switch (mode) {
-      case 'auto':
-        return 'Bot';
-      case 'manual':
-        return 'Persona';
-      default:
-        return '';
-    }
-  };
-
-  const getModeDescription = (mode: 'auto' | 'manual') => {
-    switch (mode) {
-      case 'auto':
-        return 'El AI responde automáticamente';
-      case 'manual':
-        return 'Solo el operador puede responder';
-      default:
-        return '';
-    }
-  };
-
   return (
-    <div className="bg-white rounded-lg border p-4 mb-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-medium text-gray-900">Modo de Conversación</h3>
-        <div className="flex items-center space-x-1">
-          {getModeIcon(currentMode)}
-          <span className="text-sm text-gray-600">{getModeLabel(currentMode)}</span>
+    <div className="bg-white rounded-lg border p-4">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-medium text-gray-900">¿Quién responde en este chat?</h3>
+        <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+          currentMode === 'auto' 
+            ? 'bg-blue-100 text-blue-700' 
+            : 'bg-green-100 text-green-700'
+        }`}>
+          {currentMode === 'auto' ? '🤖 Bot activo' : '👤 Operador activo'}
         </div>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {(['auto', 'manual'] as const).map((mode) => (
-          <button
-            key={mode}
-            onClick={() => handleModeChange(mode)}
-            disabled={disabled || isChanging}
-            className={`${getModeColor(mode, currentMode === mode)} ${
-              disabled || isChanging ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-            }`}
-          >
-            <div className="flex items-center space-x-2">
-              {getModeIcon(mode)}
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium">{getModeLabel(mode)}</div>
-                <div className="text-xs opacity-75">{getModeDescription(mode)}</div>
-              </div>
-              {currentMode === mode && (
-                <Check className="w-4 h-4 flex-shrink-0" />
-              )}
+      <div className="space-y-2">
+        {/* Modo Bot */}
+        <button
+          onClick={() => handleModeChange('auto')}
+          disabled={disabled || isChanging}
+          className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all duration-200 ${
+            currentMode === 'auto'
+              ? 'bg-blue-50 border-blue-500 text-blue-700'
+              : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+          } ${disabled || isChanging ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+        >
+          <div className="flex items-center space-x-3">
+            <div className={`p-2 rounded-full ${
+              currentMode === 'auto' ? 'bg-blue-100' : 'bg-gray-100'
+            }`}>
+              <Bot className="w-4 h-4" />
             </div>
-          </button>
-        ))}
+            <div className="text-left">
+              <div className="font-medium text-sm">🤖 Modo Bot</div>
+              <div className="text-xs opacity-75">El AI responde automáticamente por WhatsApp</div>
+            </div>
+          </div>
+          {currentMode === 'auto' && <Check className="w-5 h-5" />}
+        </button>
+
+        {/* Modo Manual */}
+        <button
+          onClick={() => handleModeChange('manual')}
+          disabled={disabled || isChanging}
+          className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all duration-200 ${
+            currentMode === 'manual'
+              ? 'bg-green-50 border-green-500 text-green-700'
+              : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+          } ${disabled || isChanging ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+        >
+          <div className="flex items-center space-x-3">
+            <div className={`p-2 rounded-full ${
+              currentMode === 'manual' ? 'bg-green-100' : 'bg-gray-100'
+            }`}>
+              <User className="w-4 h-4" />
+            </div>
+            <div className="text-left">
+              <div className="font-medium text-sm">👤 Modo Operador</div>
+              <div className="text-xs opacity-75">Solo operadores responden desde esta web</div>
+            </div>
+          </div>
+          {currentMode === 'manual' && <Check className="w-5 h-5" />}
+        </button>
       </div>
       
+      {/* Estado de cambio */}
       {isChanging && (
         <div className="mt-3 text-center">
           <div className="inline-flex items-center text-sm text-gray-600">
@@ -119,6 +99,16 @@ const ConversationModeToggle: React.FC<ConversationModeToggleProps> = ({
           </div>
         </div>
       )}
+
+      {/* Información adicional */}
+      <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+        <p className="text-xs text-gray-600">
+          {currentMode === 'auto' 
+            ? '💡 En modo Bot: Los mensajes de WhatsApp se responden automáticamente. Puedes editar las respuestas desde aquí.'
+            : '💡 En modo Operador: El Bot no responderá automáticamente. Solo tú puedes enviar mensajes desde esta web.'
+          }
+        </p>
+      </div>
     </div>
   );
 };
