@@ -77,7 +77,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
                     title="Nombre del operador"
                     value={settings.user.name}
                     onChange={(e) => handleChange('user', 'name', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
                   />
                 </div>
                 <div>
@@ -87,7 +87,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
                     title="Email del operador"
                     value={settings.user.email}
                     onChange={(e) => handleChange('user', 'email', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
                   />
                 </div>
                 <div>
@@ -96,7 +96,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
                     title="Rol del operador"
                     value={settings.user.role}
                     onChange={(e) => handleChange('user', 'role', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
                   >
                     <option value="Operador">Operador</option>
                     <option value="Supervisor">Supervisor</option>
@@ -118,7 +118,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
                   title="Estado de las notificaciones"
                   value={settings.notifications}
                   onChange={(e) => handleChange('notifications', '', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-gray-100"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
                 >
                   <option value="enabled">Habilitadas</option>
                   <option value="disabled">Deshabilitadas</option>
@@ -139,7 +139,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
                   title="Tema de la aplicación"
                   value={settings.theme}
                   onChange={(e) => handleChange('theme', '', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-gray-100"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
                 >
                   <option value="light">Claro</option>
                   <option value="dark">Oscuro</option>
@@ -160,7 +160,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
                   title="Modo de respuesta por defecto"
                   value={settings.autoResponse}
                   onChange={(e) => handleChange('autoResponse', '', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-gray-100"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
                 >
                   <option value="auto">Bot automático</option>
                   <option value="manual">Manual solamente</option>
