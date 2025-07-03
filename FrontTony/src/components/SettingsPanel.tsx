@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Settings, X, User, Bell, Shield } from 'lucide-react';
+import { useTheme } from '../App';
 
 interface SettingsPanelProps {
   onClose: () => void;
+  showThemeSelector?: boolean;
 }
 
-const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
+const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, showThemeSelector = false }) => {
   const [settings, setSettings] = useState({
     user: {
       name: 'Operador RRHH',
@@ -13,9 +15,10 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
       role: 'Supervisor'
     },
     notifications: 'enabled',
-    theme: 'light',
     autoResponse: 'auto'
   });
+
+  const { theme, setTheme } = useTheme();
 
   const handleChange = (section: string, key: string, value: string) => {
     if (section === 'user') {
@@ -28,14 +31,6 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
         ...prev,
         [section]: value
       }));
-    }
-  };
-
-  const applyTheme = (theme: string) => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
     }
   };
 
@@ -127,26 +122,28 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
               </div>
             </div>
 
-            {/* Theme */}
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <Shield className="w-5 h-5 text-gray-600" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Tema</h3>
-              </div>
+            {/* Theme (solo si showThemeSelector) */}
+            {showThemeSelector && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Apariencia</label>
-                <select
-                  title="Tema de la aplicación"
-                  value={settings.theme}
-                  onChange={(e) => handleChange('theme', '', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
-                >
-                  <option value="light">Claro</option>
-                  <option value="dark">Oscuro</option>
-                  <option value="auto">Automático</option>
-                </select>
+                <div className="flex items-center space-x-2 mb-4">
+                  <Shield className="w-5 h-5 text-gray-600" />
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Tema</h3>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Apariencia</label>
+                  <select
+                    title="Tema de la aplicación"
+                    value={theme}
+                    onChange={(e) => setTheme(e.target.value as any)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
+                  >
+                    <option value="light">Claro</option>
+                    <option value="dark">Oscuro</option>
+                    <option value="auto">Automático</option>
+                  </select>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Auto Response */}
             <div>
@@ -180,10 +177,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
             Cancelar
           </button>
           <button
-            onClick={() => {
-              applyTheme(settings.theme);
-              onClose();
-            }}
+            onClick={onClose}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
           >
             Guardar cambios

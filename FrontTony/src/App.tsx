@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, createContext, useContext } from 'react';
 import { MessageCircle, Settings, Bell, Menu, X, Wifi, WifiOff, LogOut, Search, MoreVertical } from 'lucide-react';
 import ConversationList from './components/ConversationList';
 import ChatArea from './components/ChatArea';
@@ -14,6 +14,15 @@ import { Conversation, Message, SenderMode, QuickResponse, ConversationFilters, 
 import apiService from './services/api';
 import { BrowserRouter, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import ConversationMonitor from './components/ConversationMonitor';
+
+// Contexto global de tema
+type Theme = 'light' | 'dark' | 'auto';
+interface ThemeContextType {
+  theme: Theme;
+  setTheme: (t: Theme) => void;
+}
+const ThemeContext = createContext<ThemeContextType>({ theme: 'light', setTheme: () => {} });
+export const useTheme = () => useContext(ThemeContext);
 
 function App() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -35,6 +44,9 @@ function App() {
     operator: ''
   });
   const [showDashboard, setShowDashboard] = useState(true);
+  const [theme, setTheme] = useState<Theme>(() => {
+    return (localStorage.getItem('theme') as Theme) || 'light';
+  });
 
   const selectedConversation = selectedConversationId 
     ? conversations.find(c => c.id === selectedConversationId) || null
@@ -398,6 +410,16 @@ function App() {
     }
   }, [isConnected]);
 
+  // Aplicar la clase dark globalmente
+  useEffect(() => {
+    if (theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
   // Mostrar login si no está autenticado
   if (!isAuthenticated) {
     return (
@@ -410,47 +432,71 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 dark:text-gray-100">
-        <AppRoutes
-          onLogout={handleLogout}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-          notifications={notifications}
-          setNotifications={setNotifications}
-          showSettings={showSettings}
-          setShowSettings={setShowSettings}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          activeFilters={activeFilters}
-          setActiveFilters={setActiveFilters}
-          activeFiltersCount={activeFiltersCount}
-          handleFilterChange={handleFilterChange}
-          isConnected={isConnected}
-          isLoading={isLoading}
-          filteredConversations={filteredConversations}
-          conversations={conversations}
-          selectedConversationId={selectedConversationId}
-          setSelectedConversationId={setSelectedConversationId}
-          selectedConversation={selectedConversation}
-          quickResponsesData={quickResponsesData}
-          handleQuickResponse={handleQuickResponse}
-          senderMode={senderMode}
-          handleEditPendingResponse={handleEditAndApprovePendingResponse}
-          isLoadingPendingResponse={isLoadingPendingResponse}
-          handleApprovePendingResponse={handleApprovePendingResponse}
-          handleRejectPendingResponse={handleRejectPendingResponse}
-          handleSendMessage={handleSendMessage}
-          handleEditMessage={handleEditMessage}
-          handleDeleteMessage={() => {}}
-          handleTagChange={() => {}}
-          handleAssignOperator={() => {}}
-          handleModeChange={handleModeChange}
-          showSettingsPanel={false}
-          setShowSettingsPanel={() => {}}
-        />
-      </div>
-    </BrowserRouter>
+    <ThemeContext.Provider value={{ theme, setTheme }}>
+      <BrowserRouter>
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 dark:text-gray-100 relative">
+          {/* Barra superior fija con botón de configuración global */}
+          <div className="fixed top-0 left-0 w-full h-14 bg-white/80 dark:bg-gray-900/80 border-b border-gray-200 dark:border-gray-800 z-50 flex items-center justify-end pr-6 shadow-sm backdrop-blur">
+            <button
+              onClick={() => setShowSettings(true)}
+              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-200"
+              title="Configuración global"
+            >
+              <Settings className="w-6 h-6" />
+            </button>
+          </div>
+          {/* Espacio para la barra superior */}
+          <div className="h-14" />
+          <AppRoutes
+            onLogout={handleLogout}
+            sidebarOpen={sidebarOpen}
+            setSidebarOpen={setSidebarOpen}
+            notifications={notifications}
+            setNotifications={setNotifications}
+            showSettings={showSettings}
+            setShowSettings={setShowSettings}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            activeFilters={activeFilters}
+            setActiveFilters={setActiveFilters}
+            activeFiltersCount={activeFiltersCount}
+            handleFilterChange={handleFilterChange}
+            isConnected={isConnected}
+            isLoading={isLoading}
+            filteredConversations={filteredConversations}
+            conversations={conversations}
+            selectedConversationId={selectedConversationId}
+            setSelectedConversationId={setSelectedConversationId}
+            selectedConversation={selectedConversation}
+            quickResponsesData={quickResponsesData}
+            handleQuickResponse={handleQuickResponse}
+            senderMode={senderMode}
+            handleEditPendingResponse={handleEditAndApprovePendingResponse}
+            isLoadingPendingResponse={isLoadingPendingResponse}
+            handleApprovePendingResponse={handleApprovePendingResponse}
+            handleRejectPendingResponse={handleRejectPendingResponse}
+            handleSendMessage={handleSendMessage}
+            handleEditMessage={handleEditMessage}
+            handleDeleteMessage={() => {}}
+            handleTagChange={() => {}}
+            handleAssignOperator={() => {}}
+            handleModeChange={handleModeChange}
+            showSettingsPanel={false}
+            setShowSettingsPanel={() => {}}
+            theme={theme}
+            setTheme={setTheme}
+            showThemeSelector={true}
+          />
+          {/* SettingsPanel global */}
+          {showSettings && (
+            <SettingsPanel
+              onClose={() => setShowSettings(false)}
+              showThemeSelector={true}
+            />
+          )}
+        </div>
+      </BrowserRouter>
+    </ThemeContext.Provider>
   );
 }
 
@@ -492,47 +538,47 @@ function BulkMessagingTool() {
     { name: 'Pedro Sánchez', phone: '+51 999 666 777' },
   ];
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div className="flex items-center px-8 py-6 bg-white border-b">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+      <div className="flex items-center px-8 py-6 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800">
         <button onClick={() => window.history.back()} className="flex items-center text-gray-600 hover:text-blue-600 font-medium mr-6">
           <span className="mr-2">←</span> Volver al Panel
         </button>
-        <h1 className="text-2xl font-semibold text-gray-900">Herramienta de Mensajería Masiva</h1>
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Herramienta de Mensajería Masiva</h1>
       </div>
       <div className="flex-1 flex flex-col md:flex-row gap-6 p-8 max-w-6xl w-full mx-auto">
         {/* Redactar Mensaje */}
-        <div className="bg-white rounded-xl shadow p-6 flex-1 flex flex-col">
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow p-6 flex-1 flex flex-col border border-gray-200 dark:border-gray-800">
           <div className="flex items-center mb-4">
             <svg className="w-6 h-6 text-blue-500 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 3.26a2 2 0 001.44 0L21 8m-9 4v8" /></svg>
-            <h2 className="text-lg font-semibold">Redactar Mensaje</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Redactar Mensaje</h2>
           </div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Contenido del mensaje</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Contenido del mensaje</label>
           <textarea
-            className="w-full h-40 border rounded-lg p-3 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
+            className="w-full h-40 border rounded-lg p-3 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400 border-gray-300 dark:border-gray-700"
             placeholder="Escribe tu mensaje aquí..."
             value={message}
             onChange={e => setMessage(e.target.value)}
           />
-          <div className="text-xs text-gray-500 mb-4">Cantidad de caracteres: {message.length}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-300 mb-4">Cantidad de caracteres: {message.length}</div>
           <button className="mt-auto bg-blue-400 hover:bg-blue-500 text-white font-medium py-3 rounded-lg flex items-center justify-center transition-colors disabled:opacity-50" disabled={!message.trim()}>
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 3.26a2 2 0 001.44 0L21 8m-9 4v8" /></svg>
             Enviar mensaje a todos los contactos
           </button>
         </div>
         {/* Lista de Contactos */}
-        <div className="bg-white rounded-xl shadow p-6 w-full md:w-80 flex flex-col">
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow p-6 w-full md:w-80 flex flex-col border border-gray-200 dark:border-gray-800">
           <div className="flex items-center mb-4">
             <svg className="w-6 h-6 text-green-500 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m9-5a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-            <h2 className="text-lg font-semibold text-gray-900">Lista de Contactos</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Lista de Contactos</h2>
           </div>
-          <div className="text-sm text-gray-600 mb-2">Total de contactos: {contacts.length}</div>
+          <div className="text-sm text-gray-600 dark:text-gray-300 mb-2">Total de contactos: {contacts.length}</div>
           <div className="flex-1 overflow-y-auto">
             {contacts.map((c, i) => (
-              <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-500 text-lg">{c.name.charAt(0)}</div>
+              <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center font-bold text-gray-500 dark:text-gray-300 text-lg">{c.name.charAt(0)}</div>
                 <div>
-                  <div className="font-medium text-gray-800">{c.name}</div>
-                  <div className="text-xs text-gray-500">{c.phone}</div>
+                  <div className="font-medium text-gray-800 dark:text-gray-100">{c.name}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-300">{c.phone}</div>
                 </div>
               </div>
             ))}

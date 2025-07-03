@@ -278,6 +278,7 @@ const ConversationMonitor = (props: any) => {
       {showSettings && (
         <SettingsPanel
           onClose={() => setShowSettings(false)}
+          showThemeSelector={false}
         />
       )}
     </div>
