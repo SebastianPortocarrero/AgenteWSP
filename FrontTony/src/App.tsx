@@ -473,14 +473,73 @@ function AppRoutes(props: any) {
       />
       <Route
         path="/mensajeria-masiva"
-        element={
-          <div className="flex items-center justify-center h-screen">
-            <h2 className="text-2xl font-bold">Funcionalidad próximamente</h2>
-          </div>
-        }
+        element={<BulkMessagingTool />}
       />
       <Route path="*" element={<Navigate to="/dashboard" />} />
     </Routes>
+  );
+}
+
+// Componente BulkMessagingTool (diseño como la imagen adjunta, traducido al español)
+function BulkMessagingTool() {
+  const [message, setMessage] = useState('');
+  const contacts = [
+    { name: 'Juan Pérez', phone: '+51 999 111 222' },
+    { name: 'Ana López', phone: '+51 999 222 333' },
+    { name: 'Carlos Ruiz', phone: '+51 999 333 444' },
+    { name: 'María Gómez', phone: '+51 999 444 555' },
+    { name: 'Sofía Torres', phone: '+51 999 555 666' },
+    { name: 'Pedro Sánchez', phone: '+51 999 666 777' },
+  ];
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="flex items-center px-8 py-6 bg-white border-b">
+        <button onClick={() => window.history.back()} className="flex items-center text-gray-600 hover:text-blue-600 font-medium mr-6">
+          <span className="mr-2">←</span> Volver al Panel
+        </button>
+        <h1 className="text-2xl font-semibold text-gray-900">Herramienta de Mensajería Masiva</h1>
+      </div>
+      <div className="flex-1 flex flex-col md:flex-row gap-6 p-8 max-w-6xl w-full mx-auto">
+        {/* Redactar Mensaje */}
+        <div className="bg-white rounded-xl shadow p-6 flex-1 flex flex-col">
+          <div className="flex items-center mb-4">
+            <svg className="w-6 h-6 text-blue-500 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 3.26a2 2 0 001.44 0L21 8m-9 4v8" /></svg>
+            <h2 className="text-lg font-semibold">Redactar Mensaje</h2>
+          </div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Contenido del mensaje</label>
+          <textarea
+            className="w-full h-40 border rounded-lg p-3 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
+            placeholder="Escribe tu mensaje aquí..."
+            value={message}
+            onChange={e => setMessage(e.target.value)}
+          />
+          <div className="text-xs text-gray-500 mb-4">Cantidad de caracteres: {message.length}</div>
+          <button className="mt-auto bg-blue-400 hover:bg-blue-500 text-white font-medium py-3 rounded-lg flex items-center justify-center transition-colors disabled:opacity-50" disabled={!message.trim()}>
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 3.26a2 2 0 001.44 0L21 8m-9 4v8" /></svg>
+            Enviar mensaje a todos los contactos
+          </button>
+        </div>
+        {/* Lista de Contactos */}
+        <div className="bg-white rounded-xl shadow p-6 w-full md:w-80 flex flex-col">
+          <div className="flex items-center mb-4">
+            <svg className="w-6 h-6 text-green-500 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m9-5a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+            <h2 className="text-lg font-semibold text-gray-900">Lista de Contactos</h2>
+          </div>
+          <div className="text-sm text-gray-600 mb-2">Total de contactos: {contacts.length}</div>
+          <div className="flex-1 overflow-y-auto">
+            {contacts.map((c, i) => (
+              <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-500 text-lg">{c.name.charAt(0)}</div>
+                <div>
+                  <div className="font-medium text-gray-800">{c.name}</div>
+                  <div className="text-xs text-gray-500">{c.phone}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
