@@ -76,7 +76,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
 
       {/* Notification Panel */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-white border rounded-lg shadow-lg z-50 max-h-96 overflow-hidden">
+        <div className="fixed left-8 top-20 w-80 bg-white border rounded-lg shadow-lg z-50 max-h-[70vh] overflow-hidden">
           {/* Header */}
           <div className="p-4 border-b bg-gray-50">
             <div className="flex items-center justify-between">
@@ -102,7 +102,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
           </div>
 
           {/* Notifications List */}
-          <div className="max-h-64 overflow-y-auto">
+          <div className="max-h-[60vh] overflow-y-auto">
             {notifications.length === 0 ? (
               <div className="p-8 text-center text-gray-500">
                 <Bell className="w-8 h-8 mx-auto mb-2 text-gray-300" />
