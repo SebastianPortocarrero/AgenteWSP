@@ -31,15 +31,23 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
     }
   };
 
+  const applyTheme = (theme: string) => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="p-6 border-b bg-gray-50">
+        <div className="p-6 border-b bg-gray-50 dark:bg-gray-800">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <Settings className="w-6 h-6 text-gray-600" />
-              <h2 className="text-xl font-semibold text-gray-900">Configuración</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Configuración</h2>
             </div>
             <button
               onClick={onClose}
@@ -59,36 +67,36 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <User className="w-5 h-5 text-gray-600" />
-                <h3 className="text-lg font-medium text-gray-900">Perfil de Usuario</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Perfil de Usuario</h3>
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nombre</label>
                   <input
                     type="text"
                     title="Nombre del operador"
                     value={settings.user.name}
                     onChange={(e) => handleChange('user', 'name', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
                   <input
                     type="email"
                     title="Email del operador"
                     value={settings.user.email}
                     onChange={(e) => handleChange('user', 'email', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Rol</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Rol</label>
                   <select
                     title="Rol del operador"
                     value={settings.user.role}
                     onChange={(e) => handleChange('user', 'role', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="Operador">Operador</option>
                     <option value="Supervisor">Supervisor</option>
@@ -102,15 +110,15 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <Bell className="w-5 h-5 text-gray-600" />
-                <h3 className="text-lg font-medium text-gray-900">Notificaciones</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Notificaciones</h3>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Estado de notificaciones</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Estado de notificaciones</label>
                 <select
                   title="Estado de las notificaciones"
                   value={settings.notifications}
                   onChange={(e) => handleChange('notifications', '', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-gray-100"
                 >
                   <option value="enabled">Habilitadas</option>
                   <option value="disabled">Deshabilitadas</option>
@@ -123,15 +131,15 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <Shield className="w-5 h-5 text-gray-600" />
-                <h3 className="text-lg font-medium text-gray-900">Tema</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Tema</h3>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Apariencia</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Apariencia</label>
                 <select
                   title="Tema de la aplicación"
                   value={settings.theme}
                   onChange={(e) => handleChange('theme', '', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-gray-100"
                 >
                   <option value="light">Claro</option>
                   <option value="dark">Oscuro</option>
@@ -144,15 +152,15 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <Settings className="w-5 h-5 text-gray-600" />
-                <h3 className="text-lg font-medium text-gray-900">Respuesta Automática</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Respuesta Automática</h3>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Modo por defecto</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Modo por defecto</label>
                 <select
                   title="Modo de respuesta por defecto"
                   value={settings.autoResponse}
                   onChange={(e) => handleChange('autoResponse', '', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-gray-100"
                 >
                   <option value="auto">Bot automático</option>
                   <option value="manual">Manual solamente</option>
@@ -167,13 +175,13 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
         <div className="p-6 border-t bg-gray-50 flex justify-end space-x-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
             Cancelar
           </button>
           <button
             onClick={() => {
-              console.log('Settings saved:', settings);
+              applyTheme(settings.theme);
               onClose();
             }}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"

@@ -28,9 +28,9 @@ const ConversationModeToggle: React.FC<ConversationModeToggleProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg border p-4">
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium text-gray-900">¿Quién responde en este chat?</h3>
+        <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">¿Quién responde en este chat?</h3>
         <div className={`px-2 py-1 rounded-full text-xs font-medium ${
           currentMode === 'auto' 
             ? 'bg-blue-100 text-blue-700' 

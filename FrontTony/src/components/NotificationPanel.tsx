@@ -76,11 +76,11 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
 
       {/* Notification Panel */}
       {isOpen && (
-        <div className="fixed left-8 top-20 w-80 bg-white border rounded-lg shadow-lg z-50 max-h-[70vh] overflow-hidden">
+        <div className="fixed left-8 top-20 w-80 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 max-h-[70vh] overflow-hidden">
           {/* Header */}
-          <div className="p-4 border-b bg-gray-50">
+          <div className="p-4 border-b bg-gray-50 dark:bg-gray-700">
             <div className="flex items-center justify-between">
-              <h3 className="font-medium text-gray-900">Notificaciones</h3>
+              <h3 className="font-medium text-gray-900 dark:text-gray-100">Notificaciones</h3>
               <div className="flex items-center space-x-2">
                 {unreadCount > 0 && (
                   <button
@@ -112,7 +112,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
               notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors ${
+                  className={`p-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors ${
                     !notification.read ? 'bg-blue-50' : ''
                   }`}
                   onClick={() => {
@@ -132,7 +132,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <p className={`text-sm font-medium ${
-                          !notification.read ? 'text-gray-900' : 'text-gray-700'
+                          !notification.read ? 'text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'
                         }`}>
                           {notification.title}
                         </p>

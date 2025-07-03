@@ -73,10 +73,10 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, onClose }) => {
   ];
 
   return (
-    <div className="absolute bottom-full left-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 w-80">
+    <div className="absolute bottom-full left-0 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 w-80">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-100">
-        <h3 className="font-medium text-gray-900">Adjuntar archivo</h3>
+        <h3 className="font-medium text-gray-900 dark:text-gray-100">Adjuntar archivo</h3>
         <button
           onClick={onClose}
           title="Cerrar selector de archivos"

@@ -43,7 +43,7 @@ const PendingResponseCard: React.FC<PendingResponseCardProps> = ({
             <Bot className="w-4 h-4 text-purple-600" />
           </div>
           <div>
-            <h3 className="text-sm font-medium text-gray-900">
+            <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
               🤖👤 Respuesta Sugerida por IA
             </h3>
             <p className="text-xs text-gray-500">
@@ -89,7 +89,7 @@ const PendingResponseCard: React.FC<PendingResponseCardProps> = ({
             </div>
           </div>
         ) : (
-          <div className="bg-white p-3 rounded-lg border border-purple-100">
+          <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-purple-100 dark:border-purple-700">
             <p className="text-sm text-gray-800 whitespace-pre-wrap">
               {pendingResponse.content}
             </p>

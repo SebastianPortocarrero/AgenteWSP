@@ -85,7 +85,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
         <div
           key={conversation.id}
           onClick={() => onSelectConversation(conversation.id)}
-          className={`p-4 cursor-pointer transition-all duration-200 hover:bg-gray-50 relative ${
+          className={`p-4 cursor-pointer transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 relative ${
             selectedConversation === conversation.id 
               ? 'bg-green-50 border-r-4 border-green-500' 
               : ''
@@ -103,7 +103,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-1">
                 <h3 className={`font-medium truncate ${
-                  conversation.unreadCount > 0 ? 'text-gray-900' : 'text-gray-700'
+                  conversation.unreadCount > 0 ? 'text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'
                 }`}>
                   {conversation.user.name}
                 </h3>

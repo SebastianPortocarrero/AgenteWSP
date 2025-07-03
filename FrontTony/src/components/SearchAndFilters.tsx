@@ -60,7 +60,7 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
 
       {/* Panel de filtros */}
       {showFilters && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10">
           <div className="p-4 space-y-4">
             
             {/* Estado */}
@@ -150,7 +150,7 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
             <div className="flex space-x-2 pt-2 border-t border-gray-100">
               <button
                 onClick={clearAllFilters}
-                className="flex-1 flex items-center justify-center space-x-1 px-3 py-2 text-sm text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                className="flex-1 flex items-center justify-center space-x-1 px-3 py-2 text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
                 <X className="w-3 h-3" />
                 <span>Limpiar</span>

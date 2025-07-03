@@ -154,7 +154,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
       {/* Área de mensajes */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f0f0f0' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
@@ -172,7 +172,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                       value={editContent}
                       onChange={(e) => setEditContent(e.target.value)}
                       placeholder="Editar mensaje..."
-                      className="w-full p-3 border border-gray-300 rounded-lg text-gray-900 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-900 dark:placeholder-gray-400"
                       rows={3}
                     />
                     <div className="flex space-x-2">
@@ -252,7 +252,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       )}
 
       {/* Área de input */}
-      <div className="bg-white border-t border-gray-200 p-4">
+      <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
         <div className="flex items-end space-x-3">
           {/* Botón de archivos adjuntos */}
           <div className="relative file-upload-container">
@@ -286,7 +286,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder={`Escribir como ${senderMode === 'bot' ? 'Bot' : 'Operador'}...`}
-              className="w-full p-3 bg-transparent resize-none focus:outline-none text-sm max-h-32"
+              className="w-full p-3 bg-transparent resize-none focus:outline-none text-sm max-h-32 text-gray-900 placeholder-gray-400"
               rows={1}
               onKeyPress={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {

@@ -411,43 +411,45 @@ function App() {
 
   return (
     <BrowserRouter>
-      <AppRoutes
-        onLogout={handleLogout}
-        sidebarOpen={sidebarOpen}
-        setSidebarOpen={setSidebarOpen}
-        notifications={notifications}
-        setNotifications={setNotifications}
-        showSettings={showSettings}
-        setShowSettings={setShowSettings}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        activeFilters={activeFilters}
-        setActiveFilters={setActiveFilters}
-        activeFiltersCount={activeFiltersCount}
-        handleFilterChange={handleFilterChange}
-        isConnected={isConnected}
-        isLoading={isLoading}
-        filteredConversations={filteredConversations}
-        conversations={conversations}
-        selectedConversationId={selectedConversationId}
-        setSelectedConversationId={setSelectedConversationId}
-        selectedConversation={selectedConversation}
-        quickResponsesData={quickResponsesData}
-        handleQuickResponse={handleQuickResponse}
-        senderMode={senderMode}
-        handleEditPendingResponse={handleEditAndApprovePendingResponse}
-        isLoadingPendingResponse={isLoadingPendingResponse}
-        handleApprovePendingResponse={handleApprovePendingResponse}
-        handleRejectPendingResponse={handleRejectPendingResponse}
-        handleSendMessage={handleSendMessage}
-        handleEditMessage={handleEditMessage}
-        handleDeleteMessage={() => {}}
-        handleTagChange={() => {}}
-        handleAssignOperator={() => {}}
-        handleModeChange={handleModeChange}
-        showSettingsPanel={false}
-        setShowSettingsPanel={() => {}}
-      />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 dark:text-gray-100">
+        <AppRoutes
+          onLogout={handleLogout}
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+          notifications={notifications}
+          setNotifications={setNotifications}
+          showSettings={showSettings}
+          setShowSettings={setShowSettings}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          activeFilters={activeFilters}
+          setActiveFilters={setActiveFilters}
+          activeFiltersCount={activeFiltersCount}
+          handleFilterChange={handleFilterChange}
+          isConnected={isConnected}
+          isLoading={isLoading}
+          filteredConversations={filteredConversations}
+          conversations={conversations}
+          selectedConversationId={selectedConversationId}
+          setSelectedConversationId={setSelectedConversationId}
+          selectedConversation={selectedConversation}
+          quickResponsesData={quickResponsesData}
+          handleQuickResponse={handleQuickResponse}
+          senderMode={senderMode}
+          handleEditPendingResponse={handleEditAndApprovePendingResponse}
+          isLoadingPendingResponse={isLoadingPendingResponse}
+          handleApprovePendingResponse={handleApprovePendingResponse}
+          handleRejectPendingResponse={handleRejectPendingResponse}
+          handleSendMessage={handleSendMessage}
+          handleEditMessage={handleEditMessage}
+          handleDeleteMessage={() => {}}
+          handleTagChange={() => {}}
+          handleAssignOperator={() => {}}
+          handleModeChange={handleModeChange}
+          showSettingsPanel={false}
+          setShowSettingsPanel={() => {}}
+        />
+      </div>
     </BrowserRouter>
   );
 }
