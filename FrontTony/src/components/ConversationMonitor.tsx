@@ -6,7 +6,7 @@ import QuickResponses from './QuickResponses';
 import SearchAndFilters from './SearchAndFilters';
 import NotificationPanel from './NotificationPanel';
 import SettingsPanel from './SettingsPanel';
-import { MessageCircle, Settings, LogOut, Wifi, WifiOff, Menu, X, Search, MoreVertical } from 'lucide-react';
+import { MessageCircle, Settings, LogOut, Wifi, WifiOff, Menu, X, Search, MoreVertical, PanelRightOpen, PanelRightClose } from 'lucide-react';
 
 const ConversationMonitor = (props: any) => {
   // Recibe todos los props necesarios desde App.tsx
@@ -49,12 +49,14 @@ const ConversationMonitor = (props: any) => {
     setShowSettingsPanel
   } = props;
 
+  const [rightPanelOpen, setRightPanelOpen] = React.useState(false);
+
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden max-w-full">
       {/* Sidebar - Lista de conversaciones */}
       <div className={`bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 flex-shrink-0 ${
-        sidebarOpen ? 'w-96' : 'w-0'
-      } overflow-hidden`}>
+        sidebarOpen ? 'w-96 max-w-full' : 'w-0'
+      } overflow-hidden min-w-0`}>
         <div className="h-full flex flex-col">
           {/* Header del Sidebar */}
           <div className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
@@ -166,99 +168,118 @@ const ConversationMonitor = (props: any) => {
       </div>
 
       {/* Área principal */}
-      <div className="flex-1 flex flex-col min-w-0 bg-gray-50 dark:bg-gray-900 dark:text-gray-100">
+      <div className="flex-1 flex flex-col min-w-0 max-w-full bg-gray-50 dark:bg-gray-900 dark:text-gray-100 relative">
         {/* Top Bar */}
         <div className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors lg:hidden"
-            >
-              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
+          <div className="flex flex-1 items-center justify-between min-w-0">
+            <div className="flex items-center min-w-0">
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors lg:hidden"
+              >
+                {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+              {selectedConversation && (
+                <>
+                  <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-medium text-gray-600">
+                      {selectedConversation.user.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="flex flex-col min-w-0 ml-3">
+                    <h2 className="font-medium text-gray-900 dark:text-gray-100 truncate">{selectedConversation.user.name}</h2>
+                    <div className="flex items-center min-w-0">
+                      <p className="text-sm text-gray-500 truncate mr-2">
+                        {selectedConversation.assignedOperator && `Atendido por: ${selectedConversation.assignedOperator}`}
+                      </p>
+                      <div className={`w-3 h-3 rounded-full mr-1 flex-shrink-0 ${
+                        selectedConversation.status === 'pending' ? 'bg-orange-400' :
+                        selectedConversation.status === 'in_progress' ? 'bg-blue-400' :
+                        'bg-green-400'
+                      }`} title={
+                        selectedConversation.status === 'pending' ? 'Pendiente' :
+                        selectedConversation.status === 'in_progress' ? 'En progreso' :
+                        'Cerrado'
+                      }></div>
+                      <span className="text-sm text-gray-500 truncate">
+                        {selectedConversation.messages.length} mensajes
+                      </span>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
             {selectedConversation && (
-              <>
-                <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-gray-600">
-                    {selectedConversation.user.name.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-                <div>
-                  <h2 className="font-medium text-gray-900 dark:text-gray-100">{selectedConversation.user.name}</h2>
-                  <p className="text-sm text-gray-500">
-                    {selectedConversation.assignedOperator && `Atendido por: ${selectedConversation.assignedOperator}`}
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
-          {selectedConversation && (
-            <div className="flex items-center space-x-2">
-              <div className={`w-3 h-3 rounded-full ${
-                selectedConversation.status === 'pending' ? 'bg-orange-400' :
-                selectedConversation.status === 'in_progress' ? 'bg-blue-400' :
-                'bg-green-400'
-              }`} title={
-                selectedConversation.status === 'pending' ? 'Pendiente' :
-                selectedConversation.status === 'in_progress' ? 'En progreso' :
-                'Cerrado'
-              }></div>
-              <span className="text-sm text-gray-500">
-                {selectedConversation.messages.length} mensajes
-              </span>
               <button 
                 title="Más opciones"
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors ml-2 flex-shrink-0"
               >
                 <MoreVertical className="w-4 h-4 text-gray-500" />
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
+        {/* Botón flotante para abrir panel derecho (solo si está cerrado) */}
+        {!rightPanelOpen && (
+          <button
+            className="absolute top-4 right-4 z-30 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-full shadow-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            onClick={() => setRightPanelOpen(true)}
+            title="Abrir panel lateral"
+          >
+            <PanelRightOpen className="w-6 h-6 text-gray-700 dark:text-gray-200" />
+          </button>
+        )}
         {/* Área de chat y panel lateral */}
-        <div className="flex-1 flex min-h-0">
+        <div className="flex-1 flex min-h-0 max-w-full relative">
           {/* Chat Area */}
-          <div className="flex-1 min-w-0 bg-white dark:bg-gray-950 dark:text-gray-100">
+          <div className="flex-1 min-w-0 max-w-full bg-white dark:bg-gray-950 dark:text-gray-100 overflow-x-auto">
             <ChatArea
               conversation={selectedConversation}
               senderMode={senderMode}
-              quickResponses={quickResponsesData}
               onSendMessage={handleSendMessage}
               onEditMessage={handleEditMessage}
-              onDeleteMessage={handleDeleteMessage}
-              onQuickResponse={handleQuickResponse}
-              onEditPendingResponse={handleEditPendingResponse}
-              isLoadingPendingResponse={isLoadingPendingResponse}
               onApprovePendingResponse={handleApprovePendingResponse}
               onRejectPendingResponse={handleRejectPendingResponse}
-              showSettingsPanel={showSettingsPanel}
-              setShowSettingsPanel={setShowSettingsPanel}
+              onEditAndApprovePendingResponse={handleEditPendingResponse}
+              isLoadingPendingResponse={isLoadingPendingResponse}
             />
           </div>
-          {/* Panel lateral derecho (respuestas rápidas, configuración, etc.) */}
-          <div className="hidden lg:block w-80 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-            <div className="h-full flex flex-col">
-              <ConversationModeToggle
-                mode={selectedConversation?.mode || 'manual'}
-                onModeChange={handleModeChange}
-              />
-              <QuickResponses
-                quickResponses={quickResponsesData}
-                onQuickResponse={handleQuickResponse}
-              />
-              {showSettings && (
-                <SettingsPanel
-                  isOpen={showSettings}
-                  onClose={() => setShowSettings(false)}
-                  onTagChange={handleTagChange}
-                  onAssignOperator={handleAssignOperator}
-                  conversation={selectedConversation}
+          {/* Panel lateral derecho colapsable */}
+          {rightPanelOpen && (
+            <div className="fixed inset-y-0 right-0 w-80 max-w-full border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-y-auto z-40 shadow-xl animate-slide-in">
+              {/* Botón de cerrar dentro del panel, arriba a la derecha */}
+              <button
+                className="absolute top-2 right-2 z-50 bg-white/90 dark:bg-gray-800/90 border border-gray-300 dark:border-gray-700 rounded-full shadow-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                style={{ margin: '2px' }}
+                onClick={() => setRightPanelOpen(false)}
+                title="Cerrar panel lateral"
+              >
+                <PanelRightClose className="w-6 h-6 text-gray-700 dark:text-gray-200" />
+              </button>
+              <div className="h-full flex flex-col min-h-0 pt-2 pr-2">
+                {selectedConversation && (
+                  <ConversationModeToggle
+                    currentMode={selectedConversation.mode || 'manual'}
+                    conversationId={selectedConversation.id}
+                    onModeChange={handleModeChange}
+                  />
+                )}
+                <QuickResponses
+                  quickResponses={quickResponsesData}
+                  onSelectResponse={handleQuickResponse}
                 />
-              )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
+
+      {/* SettingsPanel como modal global, fuera del panel lateral */}
+      {showSettings && (
+        <SettingsPanel
+          onClose={() => setShowSettings(false)}
+        />
+      )}
     </div>
   );
 };
