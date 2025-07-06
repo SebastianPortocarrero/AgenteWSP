@@ -1,0 +1,299 @@
+# ================================================================
+# PRE-COMMIT HOOKS CONFIGURATION
+# Tony WhatsApp Assistant - Automated Quality Checks
+# ================================================================
+
+default_language_version:
+  python: python3.11
+  node: '18.19.0'
+
+repos:
+  # ================================================================
+  # GENERAL HOOKS
+  # ================================================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim Trailing Whitespace
+        description: This hook trims trailing whitespace
+        
+      - id: end-of-file-fixer
+        name: Fix End of Files
+        description: Ensures that a file is either empty or ends with one newline
+        
+      - id: check-yaml
+        name: Check YAML
+        description: This hook checks yaml files for parseable syntax
+        
+      - id: check-json
+        name: Check JSON
+        description: This hook checks json files for parseable syntax
+        
+      - id: check-toml
+        name: Check TOML
+        description: This hook checks toml files for parseable syntax
+        
+      - id: check-merge-conflict
+        name: Check for Merge Conflicts
+        description: Check for files that contain merge conflict strings
+        
+      - id: check-added-large-files
+        name: Check for Large Files
+        description: Prevent giant files from being committed
+        args: ['--maxkb=1000']
+        
+      - id: check-case-conflict
+        name: Check for Case Conflicts
+        description: Check for files that would conflict in case-insensitive filesystems
+        
+      - id: check-symlinks
+        name: Check for Broken Symlinks
+        description: Checks for symlinks which do not point to anything
+        
+      - id: detect-private-key
+        name: Detect Private Keys
+        description: Detects presence of private keys
+
+  # ================================================================
+  # PYTHON/BACKEND HOOKS
+  # ================================================================
+  - repo: https://github.com/psf/black
+    rev: 23.11.0
+    hooks:
+      - id: black
+        name: Black Code Formatter
+        description: The uncompromising Python code formatter
+        files: ^backend/
+        language_version: python3.11
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        name: Sort Python Imports
+        description: A Python utility / library to sort imports
+        files: ^backend/
+        args: ["--profile", "black"]
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.1.0
+    hooks:
+      - id: flake8
+        name: Flake8 Linter
+        description: Your Tool For Style Guide Enforcement
+        files: ^backend/
+        additional_dependencies:
+          - flake8-docstrings
+          - flake8-bugbear
+          - flake8-comprehensions
+          - flake8-security
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.7.1
+    hooks:
+      - id: mypy
+        name: MyPy Type Checker
+        description: Optional static typing for Python
+        files: ^backend/
+        additional_dependencies: [types-all]
+
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        name: Bandit Security Linter
+        description: A security linter from OpenStack Security
+        files: ^backend/
+        args: ['-c', 'backend/bandit.yaml']
+
+  # ================================================================
+  # PYTHON TESTING HOOKS
+  # ================================================================
+  - repo: local
+    hooks:
+      - id: backend-unit-tests
+        name: Backend Unit Tests
+        description: Run backend unit tests with coverage
+        entry: bash -c 'cd backend && python -m pytest tests/ -m "unit" --cov=src --cov-fail-under=95 --tb=short'
+        language: system
+        files: ^backend/
+        types: [python]
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: backend-security-tests
+        name: Backend Security Tests
+        description: Run backend security tests
+        entry: bash -c 'cd backend && python -m pytest tests/ -m "security" --tb=short'
+        language: system
+        files: ^backend/
+        types: [python]
+        pass_filenames: false
+        stages: [pre-push]
+
+  # ================================================================
+  # JAVASCRIPT/FRONTEND HOOKS
+  # ================================================================
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        name: Prettier Code Formatter
+        description: Prettier is an opinionated code formatter
+        files: ^frontend/
+        types_or: [javascript, jsx, ts, tsx, json, markdown, yaml]
+        exclude: ^frontend/(package-lock\.json|coverage/|dist/|build/)
+
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v8.55.0
+    hooks:
+      - id: eslint
+        name: ESLint
+        description: A fully pluggable tool for identifying and reporting on patterns in JavaScript
+        files: ^frontend/.*\.(js|jsx|ts|tsx)$
+        additional_dependencies:
+          - '@typescript-eslint/eslint-plugin@^6.14.0'
+          - '@typescript-eslint/parser@^6.14.0'
+          - 'eslint-plugin-react@^7.33.2'
+          - 'eslint-plugin-react-hooks@^4.6.0'
+          - 'eslint-plugin-security@^1.7.1'
+
+  # ================================================================
+  # FRONTEND TESTING HOOKS
+  # ================================================================
+  - repo: local
+    hooks:
+      - id: frontend-type-check
+        name: Frontend Type Check
+        description: Run TypeScript type checking
+        entry: bash -c 'cd frontend && npm run type-check'
+        language: system
+        files: ^frontend/.*\.(ts|tsx)$
+        pass_filenames: false
+
+      - id: frontend-unit-tests
+        name: Frontend Unit Tests
+        description: Run frontend unit tests with coverage
+        entry: bash -c 'cd frontend && npm run test:ci'
+        language: system
+        files: ^frontend/
+        types_or: [javascript, jsx, ts, tsx]
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: frontend-security-audit
+        name: Frontend Security Audit
+        description: Run npm security audit
+        entry: bash -c 'cd frontend && npm audit --audit-level=moderate'
+        language: system
+        files: ^frontend/package.*\.json$
+        pass_filenames: false
+
+  # ================================================================
+  # DOCKER HOOKS
+  # ================================================================
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        name: Lint Dockerfiles
+        description: Dockerfile linter, validate inline bash
+        files: ^.*Dockerfile.*$
+
+  # ================================================================
+  # DOCUMENTATION HOOKS
+  # ================================================================
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.37.0
+    hooks:
+      - id: markdownlint
+        name: Markdown Linter
+        description: A Node.js style checker and lint tool for Markdown/CommonMark files
+        files: \.md$
+        args: ['--fix']
+
+  # ================================================================
+  # SECRETS DETECTION
+  # ================================================================
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        name: Detect Secrets
+        description: Detect secrets in your codebase
+        args: ['--baseline', '.secrets.baseline']
+        exclude: ^(package-lock\.json|\.secrets\.baseline)$
+
+  # ================================================================
+  # COMMIT MESSAGE HOOKS
+  # ================================================================
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.0.0
+    hooks:
+      - id: conventional-pre-commit
+        name: Conventional Commits
+        description: Ensure commit messages follow conventional commit format
+        stages: [commit-msg]
+
+  # ================================================================
+  # DEPENDENCY SCANNING
+  # ================================================================
+  - repo: local
+    hooks:
+      - id: safety-check
+        name: Python Safety Check
+        description: Check Python dependencies for known vulnerabilities
+        entry: bash -c 'cd backend && safety check --json --output safety_results.json || true'
+        language: system
+        files: ^backend/requirements.*\.txt$
+        pass_filenames: false
+
+      - id: retire-check
+        name: JavaScript Retire.js Check
+        description: Check JavaScript dependencies for known vulnerabilities
+        entry: bash -c 'cd frontend && retire --path src/ --outputformat json --outputpath retire_results.json || true'
+        language: system
+        files: ^frontend/package.*\.json$
+        pass_filenames: false
+
+  # ================================================================
+  # PERFORMANCE HOOKS
+  # ================================================================
+  - repo: local
+    hooks:
+      - id: bundle-size-check
+        name: Bundle Size Check
+        description: Check frontend bundle size
+        entry: bash -c 'cd frontend && npm run build'
+        language: system
+        files: ^frontend/
+        types_or: [javascript, jsx, ts, tsx]
+        pass_filenames: false
+        stages: [pre-push]
+
+  # ================================================================
+  # QUALITY GATES (PRE-PUSH ONLY)
+  # ================================================================
+  - repo: local
+    hooks:
+      - id: comprehensive-quality-check
+        name: Comprehensive Quality Check
+        description: Run comprehensive quality checks before push
+        entry: bash -c 'echo "🧪 Running comprehensive quality checks..." && cd backend && python scripts/run_tests.py --coverage-threshold=95.0 --quick'
+        language: system
+        files: ^(backend|frontend)/
+        pass_filenames: false
+        stages: [pre-push]
+
+# ================================================================
+# CI CONFIGURATION
+# ================================================================
+ci:
+  autofix_commit_msg: '[pre-commit.ci] auto fixes from pre-commit.com hooks'
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: []
+  submodules: false 

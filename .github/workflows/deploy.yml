@@ -1,0 +1,245 @@
+name: Full Stack Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+
+env:
+  REGISTRY: docker.io
+  BACKEND_IMAGE: ${{ secrets.DOCKER_USERNAME }}/tony-backend
+  FRONTEND_IMAGE: ${{ secrets.DOCKER_USERNAME }}/tony-frontend
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.changes.outputs.backend }}
+      frontend: ${{ steps.changes.outputs.frontend }}
+      docker: ${{ steps.changes.outputs.docker }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dorny/paths-filter@v2
+      id: changes
+      with:
+        filters: |
+          backend:
+            - 'backend/**'
+          frontend:
+            - 'frontend/**'
+          docker:
+            - 'docker/**'
+
+  call-backend-ci:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    uses: ./.github/workflows/backend-ci.yml
+    secrets: inherit
+
+  call-frontend-ci:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    uses: ./.github/workflows/frontend-ci.yml
+    secrets: inherit
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    needs: [call-backend-ci, call-frontend-ci]
+    if: always() && (needs.call-backend-ci.result == 'success' || needs.call-backend-ci.result == 'skipped') && (needs.call-frontend-ci.result == 'success' || needs.call-frontend-ci.result == 'skipped')
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build backend for testing
+      uses: docker/build-push-action@v5
+      with:
+        context: ./backend
+        file: ./backend/Dockerfile
+        load: true
+        tags: tony-backend:test
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    
+    - name: Build frontend for testing
+      uses: docker/build-push-action@v5
+      with:
+        context: ./frontend
+        file: ./frontend/Dockerfile
+        load: true
+        tags: tony-frontend:test
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    
+    - name: Create test environment
+      run: |
+        cat > .env.test << EOF
+        OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+        SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+        SUPABASE_KEY=${{ secrets.SUPABASE_KEY }}
+        WHATSAPP_TOKEN=test-token
+        REDIS_URL=redis://localhost:6379
+        DOMAIN=localhost
+        EOF
+    
+    - name: Start services
+      run: |
+        docker run -d --name backend \
+          --network host \
+          --env-file .env.test \
+          tony-backend:test
+        
+        docker run -d --name frontend \
+          -p 3000:80 \
+          tony-frontend:test
+        
+        sleep 10
+    
+    - name: Wait for services to be ready
+      run: |
+        timeout 60s bash -c 'until curl -f http://localhost:8000/health; do sleep 2; done'
+        timeout 60s bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
+    
+    - name: Run integration tests
+      run: |
+        cd tests/integration
+        npm install
+        npm run test
+    
+    - name: Upload integration test results
+      uses: actions/upload-artifact@v3
+      if: failure()
+      with:
+        name: integration-test-results
+        path: tests/integration/results/
+    
+    - name: Cleanup
+      if: always()
+      run: |
+        docker stop backend frontend || true
+        docker rm backend frontend || true
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: [integration-tests]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: staging
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy to staging with Docker Compose
+      run: |
+        echo "🚀 Deploying to staging environment..."
+        
+        # Crear archivo de entorno para staging
+        cat > .env.staging << EOF
+        OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+        SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+        SUPABASE_KEY=${{ secrets.SUPABASE_KEY }}
+        WHATSAPP_TOKEN=${{ secrets.WHATSAPP_TOKEN }}
+        REDIS_URL=redis://redis:6379
+        DOMAIN=staging.example.com
+        EOF
+        
+        # Actualizar docker-compose con las imágenes más recientes
+        docker-compose -f docker/docker-compose.yml --env-file .env.staging pull
+        docker-compose -f docker/docker-compose.yml --env-file .env.staging up -d
+    
+    - name: Wait for deployment
+      run: |
+        echo "⏳ Waiting for services to start..."
+        sleep 30
+    
+    - name: Health check
+      run: |
+        echo "🔍 Running health checks..."
+        curl -f http://localhost/health || exit 1
+        curl -f http://localhost/ || exit 1
+    
+    - name: Run smoke tests
+      run: |
+        cd tests/e2e
+        npm install
+        npm run test:staging
+    
+    - name: Notify deployment success
+      uses: 8398a7/action-slack@v3
+      with:
+        status: success
+        text: "✅ Staging deployment successful!"
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: [deploy-staging]
+    if: github.event.inputs.environment == 'production'
+    environment: production
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy to production
+      run: |
+        echo "🚀 Deploying to production environment..."
+        echo "🔐 This would require additional security and approval workflows"
+        
+        # En producción, aquí irían comandos específicos como:
+        # - Deployment a Kubernetes
+        # - Actualización de load balancers
+        # - Database migrations
+        # - Cache warming
+        # - etc.
+    
+    - name: Notify production deployment
+      uses: 8398a7/action-slack@v3
+      with:
+        status: success
+        text: "🎉 Production deployment successful!"
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  rollback:
+    runs-on: ubuntu-latest
+    if: failure()
+    needs: [deploy-staging, deploy-production]
+    
+    steps:
+    - name: Rollback deployment
+      run: |
+        echo "⚠️ Deployment failed, initiating rollback..."
+        # Aquí iría la lógica de rollback
+        # - Revertir a la versión anterior
+        # - Restaurar base de datos si es necesario
+        # - Notificar al equipo
+    
+    - name: Notify rollback
+      uses: 8398a7/action-slack@v3
+      with:
+        status: failure
+        text: "🔄 Rollback initiated due to deployment failure"
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }} 

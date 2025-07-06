@@ -1,0 +1,719 @@
+{
+    "info": {
+        "name": "Tony WhatsApp Assistant - API Tests",
+        "description": "Comprehensive API testing collection for Tony WhatsApp Assistant",
+        "version": "1.0.0",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{access_token}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "{{base_url}}",
+            "type": "string"
+        },
+        {
+            "key": "access_token",
+            "value": "{{access_token}}",
+            "type": "string"
+        },
+        {
+            "key": "test_user_id",
+            "value": "test_user_12345",
+            "type": "string"
+        },
+        {
+            "key": "test_phone",
+            "value": "+1234567890",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Health & Status",
+            "item": [
+                {
+                    "name": "Health Check",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/health",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "health"]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status code is 200', function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test('Response time is less than 500ms', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                                    "});",
+                                    "",
+                                    "pm.test('Response has correct structure', function () {",
+                                    "    const responseJson = pm.response.json();",
+                                    "    pm.expect(responseJson).to.have.property('status');",
+                                    "    pm.expect(responseJson).to.have.property('timestamp');",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "API Status",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/status",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "status"]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status code is 200', function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test('API version is present', function () {",
+                                    "    const responseJson = pm.response.json();",
+                                    "    pm.expect(responseJson).to.have.property('version');",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "Login",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"{{test_username}}\",\n    \"password\": \"{{test_password}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/auth/login",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "auth", "login"]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status code is 200', function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test('Response contains access token', function () {",
+                                    "    const responseJson = pm.response.json();",
+                                    "    pm.expect(responseJson).to.have.property('access_token');",
+                                    "    pm.globals.set('access_token', responseJson.access_token);",
+                                    "});",
+                                    "",
+                                    "pm.test('Token is JWT format', function () {",
+                                    "    const responseJson = pm.response.json();",
+                                    "    const token = responseJson.access_token;",
+                                    "    pm.expect(token.split('.')).to.have.length(3);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Token Validation",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/auth/validate",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "auth", "validate"]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status code is 200', function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test('Token is valid', function () {",
+                                    "    const responseJson = pm.response.json();",
+                                    "    pm.expect(responseJson.valid).to.be.true;",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "WhatsApp Webhook",
+            "item": [
+                {
+                    "name": "Webhook Verification",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/webhook?hub.mode=subscribe&hub.verify_token={{verify_token}}&hub.challenge=test_challenge",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "webhook"],
+                            "query": [
+                                {
+                                    "key": "hub.mode",
+                                    "value": "subscribe"
+                                },
+                                {
+                                    "key": "hub.verify_token",
+                                    "value": "{{verify_token}}"
+                                },
+                                {
+                                    "key": "hub.challenge",
+                                    "value": "test_challenge"
+                                }
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status code is 200', function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test('Returns challenge', function () {",
+                                    "    pm.expect(pm.response.text()).to.equal('test_challenge');",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Receive Text Message",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"object\": \"whatsapp_business_account\",\n    \"entry\": [\n        {\n            \"id\": \"123456789\",\n            \"changes\": [\n                {\n                    \"value\": {\n                        \"messaging_product\": \"whatsapp\",\n                        \"metadata\": {\n                            \"display_phone_number\": \"{{test_phone}}\",\n                            \"phone_number_id\": \"987654321\"\n                        },\n                        \"messages\": [\n                            {\n                                \"from\": \"{{test_phone}}\",\n                                \"id\": \"wamid.test123\",\n                                \"timestamp\": \"{{$timestamp}}\",\n                                \"text\": {\n                                    \"body\": \"Hola Tony, ¿cómo estás?\"\n                                },\n                                \"type\": \"text\"\n                            }\n                        ]\n                    },\n                    \"field\": \"messages\"\n                }\n            ]\n        }\n    ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/webhook",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "webhook"]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status code is 200 or 202', function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 202]);",
+                                    "});",
+                                    "",
+                                    "pm.test('Response time is less than 2000ms', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                                    "});",
+                                    "",
+                                    "pm.test('Response has correct structure', function () {",
+                                    "    const responseJson = pm.response.json();",
+                                    "    pm.expect(responseJson).to.have.property('status');",
+                                    "    pm.expect(responseJson).to.have.property('message_id');",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Receive Image Message",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"object\": \"whatsapp_business_account\",\n    \"entry\": [\n        {\n            \"id\": \"123456789\",\n            \"changes\": [\n                {\n                    \"value\": {\n                        \"messaging_product\": \"whatsapp\",\n                        \"metadata\": {\n                            \"display_phone_number\": \"{{test_phone}}\",\n                            \"phone_number_id\": \"987654321\"\n                        },\n                        \"messages\": [\n                            {\n                                \"from\": \"{{test_phone}}\",\n                                \"id\": \"wamid.test456\",\n                                \"timestamp\": \"{{$timestamp}}\",\n                                \"image\": {\n                                    \"mime_type\": \"image/jpeg\",\n                                    \"sha256\": \"sample_hash\",\n                                    \"id\": \"image_id_123\"\n                                },\n                                \"type\": \"image\"\n                            }\n                        ]\n                    },\n                    \"field\": \"messages\"\n                }\n            ]\n        }\n    ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/webhook",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "webhook"]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status code is 200 or 202', function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 202]);",
+                                    "});",
+                                    "",
+                                    "pm.test('Image message processed', function () {",
+                                    "    const responseJson = pm.response.json();",
+                                    "    pm.expect(responseJson.message_type).to.equal('image');",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Chat Management",
+            "item": [
+                {
+                    "name": "Get Chat History",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/chat/history?user_id={{test_user_id}}&limit=10",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "chat", "history"],
+                            "query": [
+                                {
+                                    "key": "user_id",
+                                    "value": "{{test_user_id}}"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status code is 200', function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test('Response is array', function () {",
+                                    "    const responseJson = pm.response.json();",
+                                    "    pm.expect(responseJson).to.be.an('array');",
+                                    "});",
+                                    "",
+                                    "pm.test('Chat history has correct structure', function () {",
+                                    "    const responseJson = pm.response.json();",
+                                    "    if (responseJson.length > 0) {",
+                                    "        pm.expect(responseJson[0]).to.have.property('message_id');",
+                                    "        pm.expect(responseJson[0]).to.have.property('timestamp');",
+                                    "        pm.expect(responseJson[0]).to.have.property('message');",
+                                    "    }",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Send Message",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"to\": \"{{test_phone}}\",\n    \"message\": \"Este es un mensaje de prueba desde la API\",\n    \"type\": \"text\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/chat/send",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "chat", "send"]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status code is 200 or 202', function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 202]);",
+                                    "});",
+                                    "",
+                                    "pm.test('Message sent successfully', function () {",
+                                    "    const responseJson = pm.response.json();",
+                                    "    pm.expect(responseJson).to.have.property('message_id');",
+                                    "    pm.expect(responseJson.status).to.equal('sent');",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Admin Panel",
+            "item": [
+                {
+                    "name": "Get Users",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/admin/users",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "admin", "users"]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status code is 200 or 403', function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 403]);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.code === 200) {",
+                                    "    pm.test('Response is array of users', function () {",
+                                    "        const responseJson = pm.response.json();",
+                                    "        pm.expect(responseJson).to.be.an('array');",
+                                    "    });",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get Statistics",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/admin/stats",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "admin", "stats"]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status code is 200 or 403', function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 403]);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.code === 200) {",
+                                    "    pm.test('Statistics have correct structure', function () {",
+                                    "        const responseJson = pm.response.json();",
+                                    "        pm.expect(responseJson).to.have.property('total_users');",
+                                    "        pm.expect(responseJson).to.have.property('total_messages');",
+                                    "    });",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Security Tests",
+            "item": [
+                {
+                    "name": "SQL Injection Test",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"message\": \"'; DROP TABLE users; --\",\n    \"user_id\": \"{{test_user_id}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/webhook",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "webhook"]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('SQL injection prevented', function () {",
+                                    "    pm.expect(pm.response.code).to.not.equal(500);",
+                                    "    const responseText = pm.response.text();",
+                                    "    pm.expect(responseText).to.not.include('database error');",
+                                    "    pm.expect(responseText).to.not.include('syntax error');",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "XSS Test",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"message\": \"<script>alert('XSS')</script>\",\n    \"user_id\": \"{{test_user_id}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/webhook",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "webhook"]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('XSS attack prevented', function () {",
+                                    "    const responseText = pm.response.text();",
+                                    "    pm.expect(responseText).to.not.include('<script>');",
+                                    "    pm.expect(responseText).to.not.include('javascript:');",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Authentication Bypass Test",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer invalid_token"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/admin/users",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "admin", "users"]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Invalid token rejected', function () {",
+                                    "    pm.expect(pm.response.code).to.equal(401);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Performance Tests",
+            "item": [
+                {
+                    "name": "Load Test - Multiple Webhooks",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"message\": \"Load test message {{$randomInt}}\",\n    \"user_id\": \"load_test_{{$randomInt}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/webhook",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "webhook"]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Response time under 2000ms', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                                    "});",
+                                    "",
+                                    "pm.test('Status code is success', function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 202]);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "// Global pre-request script",
+                    "if (!pm.environment.get('base_url')) {",
+                    "    pm.environment.set('base_url', 'http://localhost:8000');",
+                    "}",
+                    "",
+                    "if (!pm.environment.get('verify_token')) {",
+                    "    pm.environment.set('verify_token', 'your_verify_token_here');",
+                    "}",
+                    "",
+                    "// Generate random test data",
+                    "pm.environment.set('random_message_id', 'msg_' + Math.random().toString(36).substr(2, 9));",
+                    "pm.environment.set('random_user_id', 'user_' + Math.random().toString(36).substr(2, 9));"
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "// Global test script",
+                    "pm.test('Response format is JSON', function () {",
+                    "    pm.response.to.be.json;",
+                    "});",
+                    "",
+                    "pm.test('No server errors', function () {",
+                    "    pm.response.to.not.have.status(500);",
+                    "});",
+                    "",
+                    "// Log response time for performance monitoring",
+                    "console.log('Response time: ' + pm.response.responseTime + 'ms');"
+                ]
+            }
+        }
+    ]
+} 

@@ -1,0 +1,72 @@
+# ================================================================
+# BACKEND DEPENDENCIES - Tony WhatsApp Assistant
+# FastAPI + LangChain + OpenAI Integration
+# ================================================================
+
+# Core AI & LangChain
+langchain==0.1.14
+langchain-openai==0.0.5
+openai==1.23.2
+
+# Web - FastAPI Stack
+fastapi==0.110.0
+uvicorn[standard]==0.27.0
+pydantic==2.5.3
+orjson==3.10.12
+aiohttp==3.9.3
+httpx==0.25.2
+beautifulsoup4==4.12.3
+
+# Database
+supabase==2.3.1
+
+# Document Processing
+python-docx==1.1.0
+PyPDF2==3.0.1
+markitdown>=0.0.1
+
+# Google Drive Integration
+google-api-python-client==2.115.0
+google-auth-httplib2==0.2.0
+google-auth-oauthlib==1.2.0
+
+# Utilities
+python-dotenv==1.0.1
+requests==2.31.0
+numpy>=1.23.5,<2
+
+# Data Processing
+pandas>=2.2.0
+openpyxl==3.1.2
+
+# SerpAPI for Web Search
+google-search-results==2.4.2
+
+# Task Scheduling & Background Jobs
+celery==5.3.6
+redis==4.5.5
+schedule==1.2.1
+apscheduler>=3.10.0
+
+# Async utilities
+nest_asyncio==1.6.0
+
+# Additional dependencies for document indexing
+sentence-transformers>=2.2.2
+chromadb>=0.4.18
+
+# Authentication & Security
+passlib[bcrypt]>=1.7.4
+python-jose[cryptography]>=3.3.0
+python-multipart>=0.0.6
+
+# Testing (development)
+pytest>=7.4.3
+pytest-asyncio>=0.21.1
+pytest-cov>=4.1.0
+
+# Code Quality (development)
+black>=23.11.0
+isort>=5.12.0
+flake8>=6.1.0
+mypy>=1.7.1 

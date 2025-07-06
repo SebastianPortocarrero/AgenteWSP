@@ -1,0 +1,291 @@
+# ============================================
+# TONY WHATSAPP ASSISTANT - MONOREPO
+# ============================================
+
+# ============================================
+# ARCHIVOS SENSIBLES Y CONFIGURACIÓN
+# ============================================
+# Variables de entorno
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Configuraciones sensibles
+backend/config/.env
+backend/config/token.json
+backend/config/client_secret.json
+
+# Claves API y tokens
+**/config/secrets.*
+**/.secrets
+**/token.json
+**/client_secret.json
+
+# ============================================
+# PYTHON (BACKEND)
+# ============================================
+# Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribución / empaquetado
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Entornos virtuales
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+sailed/
+sailed_new/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ============================================
+# NODE.JS (FRONTEND)
+# ============================================
+# Dependencias
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Archivos de bloqueo (mantener package-lock.json)
+# yarn.lock
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Compilación
+dist/
+build/
+
+# Logs
+logs
+*.log
+
+# Cache
+.npm
+.eslintcache
+
+# Vite
+.vite/
+
+# ============================================
+# DOCKER
+# ============================================
+# Volúmenes y datos
+docker-compose.override.yml
+.docker/
+**/ssl/
+**/certs/
+
+# ============================================
+# TESTING
+# ============================================
+# Coverage reports
+coverage/
+*.lcov
+.nyc_output
+
+# Test results
+test-results/
+playwright-report/
+test-results.xml
+
+# ============================================
+# ARCHIVOS DE SISTEMA
+# ============================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# ============================================
+# IDEs Y EDITORES
+# ============================================
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+
+# ============================================
+# ARCHIVOS TEMPORALES
+# ============================================
+*.tmp
+*.temp
+*.bak
+*.backup
+*.swp
+*.swo
+
+# ============================================
+# LOGS Y BASES DE DATOS
+# ============================================
+*.log
+logs/
+*.db
+*.sqlite3
+
+# ============================================
+# ARCHIVOS DE BACKUP
+# ============================================
+backup/
+*.backup
+*.bak
+
+# ============================================
+# DOCUMENTACIÓN GENERADA
+# ============================================
+docs/_build/
+site/
+
+# ============================================
+# ARCHIVOS DE CONFIGURACIÓN LOCAL
+# ============================================
+# Configuraciones locales específicas
+local.json
+local.yml
+local.yaml
+*.local
+
+# ============================================
+# ARCHIVOS DE GITHUB ACTIONS
+# ============================================
+# Secrets locales para testing
+.github/secrets/
+
+# ============================================
+# ARCHIVOS DE MONITOREO
+# ============================================
+*.pid
+*.seed
+*.pid.lock
+
+# ============================================
+# ARCHIVOS DE CACHE
+# ============================================
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+.vuepress/dist
+
+# ============================================
+# ARCHIVOS DE COMPILACIÓN
+# ============================================
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# ============================================
+# IGNORAR DIRECTORIOS ANTIGUOS
+# ============================================
+# Durante la migración, ignorar estructuras antiguas
+AgenteTony-old/
+FrontTony-old/
+
+# ============================================
+# ARCHIVOS DE DESARROLLO
+# ============================================
+# Notas de desarrollo
+TODO.md
+NOTES.md
+DEVELOPMENT.md
+.scratch/
+
+# ============================================
+# ARCHIVOS DE DEPLOYMENT
+# ============================================
+# Variables de deployment específicas
+deploy.env
+production.env
+
+# ============================================
+# ARCHIVOS DE ANÁLISIS
+# ============================================
+# Análisis de bundle
+stats.json
+bundle-analyzer/
+
+# ============================================
+# ARCHIVOS DE TESTING E2E
+# ============================================
+# Capturas de pantalla de tests
+tests/screenshots/
+tests/videos/
+playwright/.auth/
+
+# ============================================
+# ARCHIVOS DE CONFIGURACIÓN EXTERNA
+# ============================================
+# Configuraciones externas que no deben versionarse
+external-config/
+third-party-configs/ 

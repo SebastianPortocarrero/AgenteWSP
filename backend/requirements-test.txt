@@ -1,0 +1,81 @@
+# ================================================================
+# TESTING DEPENDENCIES - BACKEND
+# ================================================================
+
+# Core Testing Framework
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-mock==3.12.0
+pytest-timeout==2.2.0
+pytest-xdist==3.3.1              # Parallel test execution
+pytest-benchmark==4.0.0          # Performance benchmarking
+pytest-html==4.1.1               # HTML reports
+
+# Coverage Testing  
+pytest-cov==4.1.0
+coverage[toml]==7.3.2
+pytest-sugar==0.9.7              # Better output formatting
+
+# API Testing
+httpx==0.25.2                    # Async HTTP client for testing
+requests==2.31.0                 # HTTP library
+responses==0.23.3                # Mock HTTP responses
+pytest-httpserver==1.0.8        # HTTP server for testing
+
+# Database Testing
+pytest-postgresql==5.0.0        # PostgreSQL testing utilities
+fakeredis==2.20.1               # Redis mock for testing
+factory-boy==3.3.0              # Test data factories
+
+# Security Testing
+bandit[toml]==1.7.5              # Security linter
+safety==2.3.4                   # Dependency vulnerability scanning
+semgrep==1.45.0                 # Static analysis security scanner
+pytest-bandit==2.1.2            # Bandit pytest plugin
+
+# OWASP Testing
+owasp-depscan==4.3.0            # OWASP dependency check
+cyclonedx-bom==4.0.4            # Software Bill of Materials
+
+# Performance Testing
+locust==2.17.0                  # Load testing
+pytest-profiling==1.7.0        # Code profiling
+
+# Mocking and Fixtures
+freezegun==1.2.2                # Mock datetime
+Faker==19.13.0                  # Generate fake data
+pytest-factoryboy==2.6.0       # Factory integration
+responses==0.23.3               # HTTP responses mocking
+
+# Authentication Testing
+PyJWT==2.8.0                    # JWT testing
+cryptography==41.0.7           # Crypto operations
+python-jose[cryptography]==3.3.0  # JWT/JWS/JWK
+
+# FastAPI Testing
+fastapi[all]==0.110.0
+starlette==0.36.3
+uvicorn[standard]==0.24.0
+
+# Environment and Configuration
+python-dotenv==1.0.0
+pytest-env==0.8.2              # Environment variables for tests
+
+# Utilities
+freezegun==1.2.2               # Time mocking
+pytest-clarity==1.0.1          # Better assertion errors
+pytest-picked==0.4.6           # Run tests related to changed files
+
+# Quality Assurance
+black==23.11.0                 # Code formatting
+isort==5.12.0                  # Import sorting
+flake8==6.1.0                  # Linting
+mypy==1.7.1                    # Type checking
+pre-commit==3.5.0              # Git hooks
+
+# Documentation Testing
+pytest-doctest-custom==1.0.0   # Custom doctest integration
+
+# Regression Testing
+pytest-regressions==2.5.0      # Regression test utilities
+pytest-snapshot==0.9.0         # Snapshot testing 
