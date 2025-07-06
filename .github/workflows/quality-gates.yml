@@ -27,7 +27,7 @@ jobs:
   # ================================================================
   backend-quality-gates:
     runs-on: ubuntu-latest
-    if: contains(github.event.head_commit.modified, 'backend/') || github.event_name == 'pull_request'
+    # Ejecutar siempre para pruebas - quitar condición if temporalmente
     
     outputs:
       quality-passed: ${{ steps.quality-check.outputs.passed }}
@@ -210,7 +210,7 @@ jobs:
   # ================================================================
   frontend-quality-gates:
     runs-on: ubuntu-latest
-    if: contains(github.event.head_commit.modified, 'frontend/') || github.event_name == 'pull_request'
+    # Ejecutar siempre para pruebas - quitar condición if temporalmente
     
     outputs:
       quality-passed: ${{ steps.quality-check.outputs.passed }}
