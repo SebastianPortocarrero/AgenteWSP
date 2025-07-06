@@ -136,7 +136,7 @@ jobs:
           echo "passed=true" >> $GITHUB_OUTPUT
           
       - name: 📊 Upload test artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: backend-quality-reports
@@ -311,7 +311,7 @@ jobs:
           npm run test:e2e:ci || echo "E2E tests failed (non-blocking)"
           
       - name: 📊 Upload test artifacts  
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: frontend-quality-reports
@@ -417,7 +417,7 @@ jobs:
           fi
           
       - name: 📊 Upload performance results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: performance-reports
           path: lighthouse-report.json 
