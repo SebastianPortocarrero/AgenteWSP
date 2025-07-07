@@ -108,7 +108,7 @@ repos:
         args: ['-c', 'backend/bandit.yaml']
 
   # ================================================================
-  # PYTHON TESTING HOOKS
+  # PYTHON TESTING HOOKS No funciona muy bien ya que el primero busca los test unit los cual no existen por ahora. Y el segundo solo ve 3 test.
   # ================================================================
   - repo: local
     hooks:

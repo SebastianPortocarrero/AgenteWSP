@@ -8,6 +8,7 @@ import json
 import time
 import hashlib
 import asyncio
+import secrets
 from unittest.mock import patch, Mock, AsyncMock
 from fastapi.testclient import TestClient
 from fastapi import status
@@ -344,8 +345,6 @@ class TestCryptographicSecurity:
     @pytest.mark.crypto
     def test_secure_random_generation(self):
         """Test secure random number generation."""
-        import secrets
-        
         # Test that we're using cryptographically secure random
         random_values = [secrets.token_hex(32) for _ in range(10)]
         

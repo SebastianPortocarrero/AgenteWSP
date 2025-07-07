@@ -7,6 +7,7 @@ import pytest
 import time
 import asyncio
 import statistics
+import threading
 from unittest.mock import patch, Mock, AsyncMock
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import psutil
@@ -252,7 +253,6 @@ class TestCPUPerformance:
                 cpu_samples.append(cpu_percent)
         
         # Start CPU monitoring in background
-        import threading
         monitor_thread = threading.Thread(target=monitor_cpu)
         monitor_thread.start()
         

@@ -5,7 +5,7 @@ import nest_asyncio
 from langchain_openai import ChatOpenAI
 from langchain.tools import Tool
 from langchain_openai import ChatOpenAI
-from langchain.prompts import MessagesPlaceholder
+from langchain.prompts import MessagesPlaceholder, ChatPromptTemplate
 from langchain_core.messages import HumanMessage, SystemMessage
 from indexador import  IndexerAgent
 from busqueda_Web import WebSearchAgent
@@ -27,6 +27,27 @@ last_activity = {}
 INACTIVITY_TIMEOUT = 3600  # 1 hora en segundos
 
 
+def get_inactive_users(current_time: float = None) -> list:
+    """
+    Identifica usuarios inactivos basado en el tiempo de inactividad
+    
+    Args:
+        current_time: Timestamp actual (opcional, usa time.time() si no se proporciona)
+    
+    Returns:
+        Lista de user_ids que están inactivos
+    """
+    if current_time is None:
+        current_time = time.time()
+    
+    inactive_users = []
+    for user_id, last_active in last_activity.items():
+        if current_time - last_active > INACTIVITY_TIMEOUT:
+            inactive_users.append(user_id)
+    
+    return inactive_users
+
+
 def get_orchestrator_for_user(user_id):
     """Obtiene o crea un orquestador para un usuario específico"""
     # Verificar si debemos limpiar alguna memoria por inactividad
@@ -43,13 +64,7 @@ def get_orchestrator_for_user(user_id):
 
 def check_and_cleanup_inactive_users():
     """Verifica y limpia la memoria de usuarios inactivos"""
-    current_time = time.time()
-    inactive_users = []
-    
-    # Identificar usuarios inactivos
-    for user_id, last_active in last_activity.items():
-        if current_time - last_active > INACTIVITY_TIMEOUT:
-            inactive_users.append(user_id)
+    inactive_users = get_inactive_users()
     
     # Limpiar memoria de usuarios inactivos
     for user_id in inactive_users:
@@ -173,8 +188,6 @@ class MainOrchestrator:
         
         
         # 4. Crear prompt personalizado con el orden que quieres
-        from langchain.prompts import ChatPromptTemplate
-        
         custom_prompt = ChatPromptTemplate.from_messages([
             ("system", system_message.content),  # 1. PRIMERO: Personalidad
             ("human", "{input}"),                # 2. SEGUNDO: Consulta actual

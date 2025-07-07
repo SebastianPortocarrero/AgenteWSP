@@ -4,14 +4,17 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse, ORJSONResponse
 from contextlib import asynccontextmanager
 import uvicorn
-from orquestador import get_orchestrator_for_user, check_and_cleanup_inactive_users, user_orchestrators, last_activity
+from orquestador import get_orchestrator_for_user, check_and_cleanup_inactive_users, user_orchestrators, last_activity, get_inactive_users, INACTIVITY_TIMEOUT
 import os
-from dotenv import load_dotenv  
+from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
 import httpx
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from indexador import DocumentIndexer
+import time
+import uuid
+from models import HealthResponse, UserStatsResponse, UserStatsModel
 # from web_api import web_api, sync_whatsapp_message, conv_manager  # Temporal: web_api necesita migración a FastAPI
 
 # Implementaciones temporales hasta migrar web_api completamente
@@ -28,7 +31,7 @@ class TempConversationManager:
             self.conversations[conversation_id] = {
                 "id": conversation_id,
                 "messages": [],
-                "mode": "manual",  # Cambiar por defecto a manual
+                "mode": "auto",  
                 "status": "active",
                 "unreadCount": 0,
                 "operator_id": None
@@ -67,10 +70,6 @@ def sync_whatsapp_message(phone_number: str, message_text: str, sender: str = "u
 
 # Instancia temporal del manager
 conv_manager = TempConversationManager()
-import time
-import uuid
-from models import HealthResponse, UserStatsResponse, UserStatsModel
-from typing import Dict, Any
 
 # Cargar variables de entorno
 load_dotenv("config/.env")
@@ -276,13 +275,16 @@ async def users_stats():
     current_time = time.time()
     active_users = []
     
+    # Usar la función utilitaria para obtener usuarios inactivos
+    inactive_users = get_inactive_users(current_time)
+    
     for user_id, last_active in last_activity.items():
         time_since_last_activity = current_time - last_active
         active_users.append(UserStatsModel(
             user_id=user_id,
             last_activity_minutes_ago=round(time_since_last_activity / 60, 2),
             has_orchestrator=user_id in user_orchestrators,
-            is_active=time_since_last_activity < 3600
+            is_active=user_id not in inactive_users  # Usar la lógica centralizada
         ))
     
     return UserStatsResponse(
@@ -307,7 +309,7 @@ async def verify_webhook(
         print("❌ Error de verificación del webhook")
         raise HTTPException(status_code=403, detail="Token de verificación inválido")
 
-async def validate_phone_number(phone_number):
+async def validate_phone_number(phone_number): #Aun no se usa , pero mas adelante cuando tenga la bd de los empleados se usara.
     """Valida si el número de teléfono está autorizado."""
     clean_number = phone_number.replace('51', '', 1) if phone_number.startswith('51') else phone_number
     
@@ -382,7 +384,7 @@ async def handle_webhook(request: Request):
                                 conversation = conv_manager.get_conversation(conversation_id)
                                 
                                 # 2. Verificar el modo de la conversación
-                                conversation_mode = conversation.get("mode", "manual") if conversation else "manual"
+                                conversation_mode = conversation.get("mode", "auto") if conversation else "auto"
                                 
                                 print(f"🔧 Modo de conversación: {conversation_mode}")
                                 
@@ -726,6 +728,106 @@ async def mark_conversation_read(conversation_id: str):
         print(f"❌ Error marcando como leída: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/conversations/{conversation_id}/approve-pending")
+async def approve_pending_response(conversation_id: str):
+    """Aprueba y envía una respuesta pendiente"""
+    try:
+        conversation = conv_manager.get_conversation(conversation_id)
+        if not conversation or not conversation.get("pending_response"):
+            raise HTTPException(status_code=404, detail="Respuesta pendiente no encontrada")
+        
+        pending_response = conversation["pending_response"]
+        response_content = pending_response["content"]
+        
+        # Enviar respuesta por WhatsApp
+        phone_number = conversation_id.replace("whatsapp_", "")
+        whatsapp_data = {"response": response_content}
+        await send_whatsapp_message(phone_number, whatsapp_data)
+        
+        # Agregar mensaje a la conversación
+        message = {
+            "id": str(uuid.uuid4()),
+            "content": response_content,
+            "sender": "bot",
+            "timestamp": time.time(),
+            "status": "sent"
+        }
+        conversation["messages"].append(message)
+        
+        # Limpiar respuesta pendiente
+        conversation["pending_response"] = None
+        
+        print(f"✅ Respuesta pendiente aprobada y enviada para {conversation_id}")
+        return {"success": True, "message": "Respuesta aprobada y enviada"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error aprobando respuesta pendiente: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/conversations/{conversation_id}/reject-pending")
+async def reject_pending_response(conversation_id: str):
+    """Rechaza una respuesta pendiente"""
+    try:
+        conversation = conv_manager.get_conversation(conversation_id)
+        if not conversation or not conversation.get("pending_response"):
+            raise HTTPException(status_code=404, detail="Respuesta pendiente no encontrada")
+        
+        # Limpiar respuesta pendiente
+        conversation["pending_response"] = None
+        
+        print(f"❌ Respuesta pendiente rechazada para {conversation_id}")
+        return {"success": True, "message": "Respuesta rechazada"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error rechazando respuesta pendiente: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/conversations/{conversation_id}/edit-and-approve")
+async def edit_and_approve_pending_response(conversation_id: str, request: Request):
+    """Edita y aprueba una respuesta pendiente"""
+    try:
+        data = await request.json()
+        new_content = data.get("content", "")
+        
+        if not new_content.strip():
+            raise HTTPException(status_code=400, detail="El contenido no puede estar vacío")
+        
+        conversation = conv_manager.get_conversation(conversation_id)
+        if not conversation or not conversation.get("pending_response"):
+            raise HTTPException(status_code=404, detail="Respuesta pendiente no encontrada")
+        
+        # Enviar respuesta editada por WhatsApp
+        phone_number = conversation_id.replace("whatsapp_", "")
+        whatsapp_data = {"response": new_content}
+        await send_whatsapp_message(phone_number, whatsapp_data)
+        
+        # Agregar mensaje editado a la conversación
+        message = {
+            "id": str(uuid.uuid4()),
+            "content": new_content,
+            "sender": "bot",
+            "timestamp": time.time(),
+            "status": "sent",
+            "edited": True
+        }
+        conversation["messages"].append(message)
+        
+        # Limpiar respuesta pendiente
+        conversation["pending_response"] = None
+        
+        print(f"✅ Respuesta pendiente editada, aprobada y enviada para {conversation_id}")
+        return {"success": True, "message": "Respuesta editada, aprobada y enviada"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error editando y aprobando respuesta pendiente: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/quick-responses")
 async def get_quick_responses():
     """Obtiene respuestas rápidas predefinidas"""
@@ -765,8 +867,6 @@ async def get_quick_responses():
 
 def run_server():
     """Inicia el servidor principal."""
-    import uvicorn
-    
     print("\n🤖 Tony - Asistente de RRHH (FastAPI)")
     print("=" * 40)
     print("🚀 Iniciando servidor...")
