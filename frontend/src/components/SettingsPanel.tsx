@@ -169,7 +169,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, showThemeSelecto
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t bg-gray-50 flex justify-end space-x-3 flex-shrink-0">
+        <div className="p-6 border-t bg-white dark:bg-gray-900 flex justify-end space-x-3 flex-shrink-0">
           <button
             onClick={onClose}
             className="px-4 py-2 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
