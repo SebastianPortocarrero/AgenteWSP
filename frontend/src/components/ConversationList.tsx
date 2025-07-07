@@ -111,7 +111,9 @@ const ConversationList = ({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
                   <h3 className={`font-medium truncate ${
-                    unreadCount > 0 ? 'text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'
+                    selectedConversation === conversation.id
+                      ? 'text-green-700 dark:text-green-400'
+                      : 'text-gray-900 dark:text-gray-200'
                   }`}>
                     {userName}
                   </h3>

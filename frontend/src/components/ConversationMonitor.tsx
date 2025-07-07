@@ -52,7 +52,7 @@ const ConversationMonitor = (props: any) => {
   const [rightPanelOpen, setRightPanelOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden max-w-full">
+    <div className="flex h-full min-h-0 bg-gray-50 dark:bg-gray-900 overflow-hidden max-w-full">
       {/* Sidebar - Lista de conversaciones */}
       <div className={`bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 flex-shrink-0 ${
         sidebarOpen ? 'w-96 max-w-full' : 'w-0'
@@ -168,7 +168,7 @@ const ConversationMonitor = (props: any) => {
       </div>
 
       {/* Área principal */}
-      <div className="flex-1 flex flex-col min-w-0 max-w-full bg-gray-50 dark:bg-gray-900 dark:text-gray-100 relative">
+      <div className="flex-1 flex flex-col h-full min-h-0 min-w-0 max-w-full bg-gray-50 dark:bg-gray-900 dark:text-gray-100 relative">
         {/* Top Bar */}
         <div className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between flex-shrink-0">
           <div className="flex flex-1 items-center justify-between min-w-0">
@@ -230,7 +230,7 @@ const ConversationMonitor = (props: any) => {
           </button>
         )}
         {/* Área de chat y panel lateral */}
-        <div className="flex-1 flex min-h-0 max-w-full relative">
+        <div className="flex-1 flex h-full min-h-0 max-w-full relative">
           {/* Chat Area */}
           <div className="flex-1 min-w-0 max-w-full bg-white dark:bg-gray-950 dark:text-gray-100 overflow-x-auto">
             <ChatArea
@@ -257,17 +257,23 @@ const ConversationMonitor = (props: any) => {
                 <PanelRightClose className="w-6 h-6 text-gray-700 dark:text-gray-200" />
               </button>
               <div className="h-full flex flex-col min-h-0 pt-2 pr-2">
-                {selectedConversation && (
-                  <ConversationModeToggle
-                    currentMode={selectedConversation.mode || 'manual'}
-                    conversationId={selectedConversation.id}
-                    onModeChange={handleModeChange}
-                  />
+                {selectedConversation ? (
+                  <>
+                    <ConversationModeToggle
+                      currentMode={selectedConversation.mode || 'manual'}
+                      conversationId={selectedConversation.id}
+                      onModeChange={handleModeChange}
+                    />
+                    <QuickResponses
+                      quickResponses={quickResponsesData}
+                      onSelectResponse={handleQuickResponse}
+                    />
+                  </>
+                ) : (
+                  <div className="flex-1 flex items-center justify-center text-center text-gray-400 p-6">
+                    Selecciona una conversación para ver respuestas rápidas.
+                  </div>
                 )}
-                <QuickResponses
-                  quickResponses={quickResponsesData}
-                  onSelectResponse={handleQuickResponse}
-                />
               </div>
             </div>
           )}

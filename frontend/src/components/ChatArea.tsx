@@ -129,8 +129,12 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   // Cerrar popups cuando se hace click fuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      const path = event.composedPath ? event.composedPath() : [];
       const target = event.target as Element;
-      if (!target.closest('.emoji-picker-container') && !target.closest('.emoji-button')) {
+      const isEmojiButton = target.closest('.emoji-button');
+      const isEmojiPicker = target.closest('.emoji-picker-container');
+      // Si el click NO es sobre el picker ni el botón, cierra
+      if (!isEmojiButton && !isEmojiPicker) {
         setShowEmojiPicker(false);
       }
       if (!target.closest('.file-upload-container') && !target.closest('.file-button')) {
@@ -155,8 +159,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
-      {/* Área de mensajes */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{
+      {/* Área de mensajes: SOLO mensajes y scroll */}
+      <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3" style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f0f0f0' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
       }}>
         {conversation.messages.map((message) => (
@@ -237,7 +241,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Respuesta Pendiente (Modo Híbrido) */}
+      {/* Respuesta Pendiente (Modo Híbrido) SIEMPRE visible abajo */}
       {conversation.pending_response && (
         <div className="px-4 pb-2">
           <PendingResponseCard
@@ -251,7 +255,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         </div>
       )}
 
-      {/* Área de input */}
+      {/* Input SIEMPRE visible abajo */}
       <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
         <div className="flex items-end space-x-3">
           {/* Botón de archivos adjuntos */}
@@ -308,8 +312,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                   ? 'text-green-600 bg-green-100' 
                   : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
               }`}
-              onClick={() => {
-                setShowEmojiPicker(!showEmojiPicker);
+              onClick={e => {
+                e.stopPropagation();
+                setShowEmojiPicker(v => !v);
                 setShowFileUpload(false);
               }}
             >

@@ -42,20 +42,20 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
         onClick={() => setShowFilters(!showFilters)}
         className={`flex items-center justify-between w-full px-3 py-2 text-sm rounded-lg border transition-colors ${
           showFilters 
-            ? 'bg-green-50 border-green-200 text-green-700' 
-            : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+            ? 'bg-green-50 border-green-200 text-gray-900 dark:text-white' 
+            : 'bg-white border-gray-200 text-gray-900 dark:text-white hover:bg-gray-50'
         }`}
       >
-        <div className="flex items-center space-x-2">
-          <Filter className="w-4 h-4" />
-          <span>Filtros</span>
+        <div className="flex items-center space-x-2 text-gray-900">
+          <Filter className="w-4 h-4 text-gray-900" />
+          <span className="text-gray-900">Filtros</span>
           {activeFiltersCount > 0 && (
             <span className="bg-green-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
               {activeFiltersCount}
             </span>
           )}
         </div>
-        <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-4 h-4 text-gray-900 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
       </button>
 
       {/* Panel de filtros */}
@@ -65,12 +65,12 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
             
             {/* Estado */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-2">Estado</label>
+              <label className="block text-xs font-medium text-gray-900 dark:text-white mb-2">Estado</label>
               <select
                 value={filters.status}
                 onChange={(e) => handleFilterChange('status', e.target.value)}
                 title="Filtrar por estado"
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
               >
                 <option value="">Todos</option>
                 <option value="pending">⏳ Pendiente</option>
@@ -81,7 +81,7 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
 
             {/* Fecha */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-2">
+              <label className="block text-xs font-medium text-gray-900 dark:text-white mb-2">
                 <Calendar className="w-3 h-3 inline mr-1" />
                 Fecha
               </label>
@@ -89,7 +89,7 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
                 value={filters.dateRange}
                 onChange={(e) => handleFilterChange('dateRange', e.target.value)}
                 title="Filtrar por rango de fechas"
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
               >
                 <option value="">Todas las fechas</option>
                 <option value="today">📅 Hoy</option>
@@ -101,7 +101,7 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
 
             {/* Etiquetas */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-2">
+              <label className="block text-xs font-medium text-gray-900 dark:text-white mb-2">
                 <Tag className="w-3 h-3 inline mr-1" />
                 Etiquetas
               </label>
@@ -129,7 +129,7 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
 
             {/* Operador */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-2">
+              <label className="block text-xs font-medium text-gray-900 dark:text-white mb-2">
                 <User className="w-3 h-3 inline mr-1" />
                 Operador
               </label>
@@ -137,7 +137,7 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
                 value={filters.operator}
                 onChange={(e) => handleFilterChange('operator', e.target.value)}
                 title="Filtrar por operador asignado"
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
               >
                 <option value="">Todos los operadores</option>
                 <option value="Ana García">👤 Ana García</option>

@@ -17,7 +17,7 @@ const EmojiPicker: FC<EmojiPickerProps> = ({ onEmojiSelect, onClose }) => {
   };
 
   return (
-    <div className="absolute bottom-full left-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+    <div className="absolute bottom-full right-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]">
       <Picker
         data={data}
         onEmojiSelect={handleEmojiSelect}

@@ -67,7 +67,7 @@ const PendingResponseCard: React.FC<PendingResponseCardProps> = ({
             <textarea
               value={editedContent}
               onChange={(e) => setEditedContent(e.target.value)}
-              className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+              className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm text-gray-900"
               rows={4}
               placeholder="Edita la respuesta..."
             />
@@ -90,7 +90,7 @@ const PendingResponseCard: React.FC<PendingResponseCardProps> = ({
           </div>
         ) : (
           <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-purple-100 dark:border-purple-700">
-            <p className="text-sm text-gray-800 whitespace-pre-wrap">
+            <p className="text-sm text-gray-800 dark:text-gray-100 whitespace-pre-wrap">
               {pendingResponse.content}
             </p>
           </div>

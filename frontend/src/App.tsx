@@ -451,19 +451,7 @@ function App() {
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 dark:text-gray-100 relative">
-        {/* Barra superior fija con botón de configuración global */}
-        <div className="fixed top-0 left-0 w-full h-14 bg-white/80 dark:bg-gray-900/80 border-b border-gray-200 dark:border-gray-800 z-50 flex items-center justify-end pr-6 shadow-sm backdrop-blur">
-          <button
-            onClick={() => setShowSettings(true)}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-200"
-            title="Configuración global"
-          >
-            <Settings className="w-6 h-6" />
-          </button>
-        </div>
-        {/* Espacio para la barra superior */}
-        <div className="h-14" />
+      <div className="h-screen min-h-0 bg-gray-50 dark:bg-gray-900 dark:text-gray-100 relative">
         <ConversationMonitor
           onLogout={handleLogout}
           sidebarOpen={sidebarOpen}
