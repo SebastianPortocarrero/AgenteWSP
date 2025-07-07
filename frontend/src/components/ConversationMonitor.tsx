@@ -209,14 +209,6 @@ const ConversationMonitor = (props: any) => {
                 </>
               )}
             </div>
-            {selectedConversation && (
-              <button 
-                title="Más opciones"
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors ml-2 flex-shrink-0"
-              >
-                <MoreVertical className="w-4 h-4 text-gray-500" />
-              </button>
-            )}
           </div>
         </div>
         {/* Botón flotante para abrir panel derecho (solo si está cerrado) */}
@@ -246,7 +238,7 @@ const ConversationMonitor = (props: any) => {
           </div>
           {/* Panel lateral derecho colapsable */}
           {rightPanelOpen && (
-            <div className="fixed inset-y-0 right-0 w-80 max-w-full border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-y-auto z-40 shadow-xl animate-slide-in">
+            <div className="w-80 max-w-full border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-y-auto relative z-40 shadow-xl animate-slide-in">
               {/* Botón de cerrar dentro del panel, arriba a la derecha */}
               <button
                 className="absolute top-2 right-2 z-50 bg-white/90 dark:bg-gray-800/90 border border-gray-300 dark:border-gray-700 rounded-full shadow-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
