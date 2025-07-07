@@ -272,6 +272,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                 setShowFileUpload(!showFileUpload);
                 setShowEmojiPicker(false);
               }}
+              disabled={senderMode === 'bot'}
             >
               <Paperclip className="w-5 h-5" />
             </button>
@@ -287,9 +288,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           {/* Input de mensaje */}
           <div className="flex-1 bg-gray-50 rounded-lg border border-gray-200 focus-within:border-green-500 transition-colors">
             <textarea
-              value={newMessage}
+              value={senderMode === 'bot' ? '' : newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              placeholder={`Escribir como ${senderMode === 'bot' ? 'Bot' : 'Operador'}...`}
+              placeholder={senderMode === 'bot' ? 'El bot está escribiendo automáticamente...' : 'Escribir como Operador...'}
               className="w-full p-3 bg-transparent resize-none focus:outline-none text-sm max-h-32 text-gray-900 placeholder-gray-400"
               rows={1}
               onKeyPress={(e) => {
@@ -299,6 +300,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                 }
               }}
               style={{ minHeight: '44px' }}
+              disabled={senderMode === 'bot'}
             />
           </div>
 
@@ -317,6 +319,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                 setShowEmojiPicker(v => !v);
                 setShowFileUpload(false);
               }}
+              disabled={senderMode === 'bot'}
             >
               <Smile className="w-5 h-5" />
             </button>
@@ -334,9 +337,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             type="button"
             title="Enviar mensaje"
             onClick={handleSendMessage}
-            disabled={!newMessage.trim()}
+            disabled={senderMode === 'bot' || !newMessage.trim()}
             className={`p-3 rounded-full transition-all ${
-              newMessage.trim() 
+              newMessage.trim() && senderMode !== 'bot'
                 ? 'bg-green-500 text-white hover:bg-green-600 shadow-lg' 
                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'
             }`}
