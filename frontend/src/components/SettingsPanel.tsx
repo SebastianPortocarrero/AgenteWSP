@@ -11,11 +11,9 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, showThemeSelecto
   const [settings, setSettings] = useState({
     user: {
       name: 'Operador RRHH',
-      email: 'operador@empresa.com',
-      role: 'Supervisor'
+      email: 'operador@empresa.com'
     },
-    notifications: 'enabled',
-    autoResponse: 'auto'
+    notifications: 'enabled'
   });
 
   const { theme, setTheme } = useTheme();
@@ -85,19 +83,6 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, showThemeSelecto
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Rol</label>
-                  <select
-                    title="Rol del operador"
-                    value={settings.user.role}
-                    onChange={(e) => handleChange('user', 'role', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
-                  >
-                    <option value="Operador">Operador</option>
-                    <option value="Supervisor">Supervisor</option>
-                    <option value="Administrador">Administrador</option>
-                  </select>
-                </div>
               </div>
             </div>
 
@@ -144,26 +129,6 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, showThemeSelecto
                 </div>
               </div>
             )}
-
-            {/* Auto Response */}
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <Settings className="w-5 h-5 text-gray-600" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Respuesta Automática</h3>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Modo por defecto</label>
-                <select
-                  title="Modo de respuesta por defecto"
-                  value={settings.autoResponse}
-                  onChange={(e) => handleChange('autoResponse', '', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
-                >
-                  <option value="auto">Bot automático</option>
-                  <option value="manual">Manual solamente</option>
-                </select>
-              </div>
-            </div>
 
           </div>
         </div>
