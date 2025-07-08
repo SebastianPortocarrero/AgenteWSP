@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -7,25 +7,27 @@ RUN apt-get update && apt-get install -y \
     build-essential python3-dev libxml2-dev libxslt1-dev libyaml-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copia el directorio config y el archivo de requerimientos de src
+# Copiar config y scripts si se usan en tiempo de ejecución
 COPY config /app/config
-COPY src/requerimientos.txt /app/src/requerimientos.txt
+COPY scripts /app/scripts
 
-# Establece el directorio de trabajo a src para la instalación de dependencias
-WORKDIR /app/src
+COPY requirements.txt ./
 
-# Instala dependencias de Python
 RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requerimientos.txt hypercorn
-
-# Copia el código fuente de src al directorio de trabajo actual (/app/src)
+#instalar dependencias
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install hypercorn
+# Copiar el código fuente
 COPY src /app/src
 
-# Expone el puerto
+# Establece el directorio de trabajo
+WORKDIR /app/src
+
+# Puerto expuesto
 EXPOSE 8080
 
-# Establece la variable de entorno PYTHONPATH para que Python encuentre los módulos
+# Establece el PYTHONPATH
 ENV PYTHONPATH=/app
 
-# Define el comando para ejecutar la aplicación
+# Comando de arranque
 CMD ["hypercorn", "main:app", "--bind", "0.0.0.0:8080", "--worker-class", "asyncio"]
