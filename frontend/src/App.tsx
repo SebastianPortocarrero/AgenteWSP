@@ -24,6 +24,7 @@ function App() {
   const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
   const [showSettings, setShowSettings] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthChecking, setIsAuthChecking] = useState(false); // Cambiado a false para que el login sea la página principal
   const [loginError, setLoginError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [quickResponsesData, setQuickResponsesData] = useState<QuickResponse[]>(quickResponses);
@@ -128,13 +129,26 @@ function App() {
     activeFilters.tags.length > 0 ? 'tags' : ''
   ].filter(Boolean).length;
 
-  // Verificar autenticación al cargar
-  useEffect(() => {
-    const token = localStorage.getItem('tony-auth-token');
-    if (token) {
-      setIsAuthenticated(true);
-    }
-  }, []);
+  // Verificar autenticación al cargar - ELIMINADO para que el login sea la página principal
+  // useEffect(() => {
+  //   const checkAuth = async () => {
+  //     try {
+  //       const token = localStorage.getItem('tony-auth-token');
+  //       if (token) {
+  //         // Aquí podrías validar el token con el backend si es necesario
+  //         setIsAuthenticated(true);
+  //       }
+  //     } catch (error) {
+  //       console.error('Error checking authentication:', error);
+  //       // Si hay error, asumimos que no está autenticado
+  //       setIsAuthenticated(false);
+  //     } finally {
+  //       setIsAuthChecking(false);
+  //     }
+  //   };
+
+  //   checkAuth();
+  // }, []);
 
   // Función de login
   const handleLogin = async (credentials: { username: string; password: string }) => {
@@ -438,7 +452,19 @@ function App() {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  // Mostrar login si no está autenticado
+  // Mostrar loading mientras se verifica la autenticación - ELIMINADO
+  // if (isAuthChecking) {
+  //   return (
+  //     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+  //       <div className="text-center">
+  //         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+  //         <p className="text-gray-600">Verificando autenticación...</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
+
+  // Mostrar login si no está autenticado - AHORA ES LA PÁGINA PRINCIPAL
   if (!isAuthenticated) {
     return (
       <LoginForm 
