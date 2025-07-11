@@ -137,11 +137,11 @@ class MainOrchestrator:
         ]
         
         # 1. Definir el sistema de mensajes
-        system_message = SystemMessage(content="""Eres TONY, un asistente laboral especializado en temas laborales y en necesidades de la empresa. 
+        system_message = SystemMessage(content="""Eres TONY, un asistente laboral especializado en temas laborales y en necesidades de la empresa en PERU. 
         
         HERRAMIENTAS DISPONIBLES:
         - buscar_documentos: Para información en documentos internos de la empresa
-        - buscar_web: Para información actualizada de internet
+        - buscar_web: Para información actualizada de internet en PERU
         
         ESTRATEGIA INTELIGENTE:
         - Evalúa cada consulta y decide qué herramientas usar
@@ -155,7 +155,10 @@ class MainOrchestrator:
         - SIEMPRE organiza tu respuesta en párrafos cortos y separados
         - NUNCA respondas con un solo párrafo largo
         - Usa viñetas o numeración cuando sea apropiado
-        - NO RESPONDAS CONSULTAS QUE NO SEAN RELACIONADAS CON EL AREA LABORAL
+        - NO RESPONDAS CONSULTAS QUE NO SEAN RELACIONADAS CON EL AREA LABORAL 
+        
+        REGLA MAS IMPORTANTE:
+        - NO RESPONDAS CONSULTAS QUE NO SEAN RELACIONADAS CON EL AREA LABORAL.
         
         REGLAS IMPORTANTES:
         1. SIEMPRE responde en el MISMO IDIOMA que usa el usuario en su consulta
@@ -253,40 +256,124 @@ class MainOrchestrator:
         return "\n\n".join(formatted_results)
     
     def _format_web_results(self, web_data):
-        """Formatea resultados de búsqueda web"""
+        """Formatea resultados de búsqueda web optimizados"""
         if isinstance(web_data, dict) and web_data.get("error"):
             return f"Error al buscar en la web: {web_data['error']}"
         
         results = []
         
-        # Añadir resultados principales
+        # Mostrar estadísticas de contenido
+        total_chars = web_data.get("total_content_chars", 0)
+        if total_chars > 0:
+            results.append(f"📊 Total de contenido obtenido: {total_chars:,} caracteres")
+            results.append("")
+        
+        # Añadir resultados principales (más resultados)
         if web_data.get("web_results"):
-            results.append("--- RESULTADOS WEB ---")
-            for i, result in enumerate(web_data["web_results"][:3], 1):
+            results.append("--- RESULTADOS WEB RELEVANTES ---")
+            for i, result in enumerate(web_data["web_results"][:5], 1):
                 results.append(f"{i}. {result['title']}")
                 results.append(f"   {result['snippet']}")
                 results.append(f"   URL: {result['url']}")
                 results.append("")
         
-        # Añadir contenido de PDFs
+        # Añadir contenido de PDFs (más contenido)
         if web_data.get("pdf_contents"):
             results.append("--- CONTENIDO DE DOCUMENTOS PDF ---")
-            for i, (url, content) in enumerate(list(web_data["pdf_contents"].items())[:2], 1):
-                results.append(f"PDF {i}: {url}")
-                summary = content[:1000] + "..." if len(content) > 1000 else content
-                results.append(summary)
+            for i, (url, content) in enumerate(list(web_data["pdf_contents"].items())[:3], 1):
+                results.append(f"📄 PDF {i}: {url}")
+                results.append(f"   Longitud: {len(content):,} caracteres")
+                # Mostrar más contenido de cada PDF
+                summary = content[:1500] + "..." if len(content) > 1500 else content
+                results.append(f"   Contenido: {summary}")
                 results.append("")
         
-        # Añadir contenido web
+        # Añadir contenido web (más contenido)
         if web_data.get("web_contents"):
             results.append("--- CONTENIDO DE PÁGINAS WEB ---")
-            for i, (url, content) in enumerate(list(web_data["web_contents"].items())[:2], 1):
-                results.append(f"Página {i}: {url}")
-                summary = content[:1000] + "..." if len(content) > 1000 else content
-                results.append(summary)
+            for i, (url, content) in enumerate(list(web_data["web_contents"].items())[:3], 1):
+                results.append(f"🌐 Página {i}: {url}")
+                results.append(f"   Longitud: {len(content):,} caracteres")
+                # Mostrar más contenido de cada página
+                summary = content[:1500] + "..." if len(content) > 1500 else content
+                results.append(f"   Contenido: {summary}")
                 results.append("")
         
-        return "\n".join(results) if results else "No se encontró información relevante en la web."
+        if not results:
+            return "No se encontró información relevante en la web."
+        
+        return "\n".join(results)
+
+    def _classify_query_as_laboral(self, query: str) -> bool:
+        """
+        Clasifica si una consulta es laboral o no usando el LLM
+        """
+        try:
+            # Crear un prompt específico para clasificación
+            classification_prompt = f"""Eres un clasificador especializado en determinar si una consulta es LABORAL o NO LABORAL.
+
+CONSULTAS LABORALES (RESPONDER "LABORAL"):
+✅ Temas de trabajo, empleo, contratos, sueldos, horarios
+✅ Vacaciones, permisos, licencias, días festivos
+✅ Beneficios laborales, bonificaciones, compensaciones
+✅ Seguridad social, salud ocupacional, riesgos laborales
+✅ Capacitación, desarrollo profesional, cursos laborales
+✅ Políticas de empresa, reglamentos internos, procedimientos
+✅ Relaciones laborales, conflictos, mediación
+✅ Terminación laboral, renuncias, despidos
+✅ Jornada de trabajo, horas extras, descansos
+✅ Condiciones de trabajo, ambiente laboral
+✅ Derechos y obligaciones del trabajador
+✅ Normativas laborales, leyes de trabajo
+✅ Evaluaciones de desempeño, ascensos
+✅ Herramientas de trabajo, equipos, recursos
+✅ Comunicación interna, reuniones, reportes
+
+CONSULTAS NO LABORALES (RESPONDER "NO_LABORAL"):
+❌ Chistes, memes, entretenimiento
+❌ Deportes, noticias generales, política
+❌ Cocina, recetas, restaurantes
+❌ Viajes, turismo, hoteles
+❌ Música, películas, series
+❌ Salud personal (no ocupacional)
+❌ Educación general (no capacitación laboral)
+❌ Compras personales, moda, tecnología
+❌ Familia, relaciones personales
+❌ Hobbies, pasatiempos, juegos
+❌ Religión, espiritualidad
+❌ Consultas técnicas generales (no relacionadas al trabajo)
+❌ Consultas sobre otros empleos o empresas
+❌ Temas personales no relacionados al trabajo actual
+
+REGLAS IMPORTANTES:
+1. Si hay AMBIGÜEDAD, clasifica como "LABORAL" para dar beneficio de la duda
+2. Considera el CONTEXTO de una empresa/ambiente laboral
+3. Si la consulta puede interpretarse como laboral, es LABORAL
+4. Solo clasifica como NO_LABORAL si es claramente no relacionado al trabajo
+
+RESPUESTA OBLIGATORIA:
+Responde ÚNICAMENTE con "LABORAL" o "NO_LABORAL" sin explicaciones adicionales.
+
+CONSULTA A CLASIFICAR: {query}"""
+
+            # Usar el LLM para clasificar
+            response = self.llm.invoke(classification_prompt)
+            classification = response.content.strip().upper()
+            
+            print(f"🏷️ Clasificación de consulta: {classification}")
+            
+            # Validar respuesta
+            if classification == "LABORAL":
+                return True
+            elif classification == "NO_LABORAL":
+                return False
+            else:
+                print(f"⚠️ Clasificación inesperada: {classification}, asumiendo LABORAL")
+                return True
+                
+        except Exception as e:
+            print(f"❌ Error en clasificación laboral: {str(e)}")
+            return True  # Por defecto, asumir laboral en caso de error
 
     def _enrich_query_with_longterm_memory(self, query: str, context: Dict[str, Any] = None) -> str:
         """
@@ -358,6 +445,25 @@ class MainOrchestrator:
             self.last_active = time.time()
             
             print(f"Procesando consulta: '{query}'")
+            
+            # 🔍 PRIMERO: Verificar si la consulta es laboral
+            is_laboral = self._classify_query_as_laboral(query)
+            
+            if not is_laboral:
+                no_laboral_response = "🚫 Lo siento, solo puedo ayudarte con consultas relacionadas al área laboral de la empresa. Por favor, pregunta sobre temas de trabajo, contratos, vacaciones, beneficios, capacitación, políticas de empresa, etc. 😊"
+                
+                print("❌ Consulta no laboral detectada, respondiendo con mensaje de restricción")
+                
+                return {
+                    "query": query,
+                    "response": no_laboral_response,
+                    "source": "laboral_classifier",
+                    "tools_used": ["clasificador_laboral"],
+                    "success": True,
+                    "classification": "NO_LABORAL"
+                }
+            
+            print("✅ Consulta laboral confirmada, procesando normalmente...")
             
             # 🧠 ENRIQUECER CONSULTA CON MEMORIA A LARGO PLAZO
             enriched_query = self._enrich_query_with_longterm_memory(query, context)
@@ -447,7 +553,8 @@ class MainOrchestrator:
                 "response": response,
                 "source": "langchain_agent",
                 "tools_used": tools_used,
-                "success": success
+                "success": success,
+                "classification": "LABORAL"
             }
                 
         except Exception as e:

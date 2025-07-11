@@ -158,74 +158,13 @@ class DocumentIndexer:
         )
         return text_splitter.split_text(text)
     
-    def _process_file(self, file):
-        """Procesa un archivo y lo indexa en Supabase"""
-        try:
-            print(f"\n📄 Procesando: {file['name']}")
-            
-            # 1. Extraer texto
-            text = self.extract_text(file['id'], file['mimeType'])
-            if text.startswith("Error:"):
-                print(f"❌ {text}")
-                return
-            
-            # 2. Dividir en chunks
-            chunks = self.split_text(text)
-            total_chunks = len(chunks)
-            print(f"📦 Total chunks: {total_chunks}")
-            
-            # 3. Procesar cada chunk
-            for i, chunk in enumerate(chunks, 1):
-                try:
-                    # Generar embedding
-                    embedding = self.embeddings_model.embed_query(chunk)
-                    
-                    # Metadata del chunk
-                    chunk_metadata = {
-                        'file_id': file['id'],
-                        'file_name': file['name'],
-                        'file_type': file['mimeType'],
-                        'chunk_number': i,
-                        'total_chunks': total_chunks,
-                        'modifiedTime': file.get('modifiedTime', ''),
-                        'timestamp': datetime.now().isoformat()
-                    }
-                    
-                    # Crear registro para Supabase
-                    data = {
-                        "content": chunk,
-                        "embedding": embedding,
-                        "metadata": chunk_metadata
-                    }
-                    
-                    # Insertar en Supabase usando helper
-                    response = make_supabase_request(
-                        method="POST",
-                        endpoint="tfinal",
-                        data=data
-                    )
-                    
-                    if response.status_code == 201:
-                        print(f"  ✅ Chunk {i}/{total_chunks} indexado")
-                    else:
-                        print(f"  ❌ Error en chunk {i}/{total_chunks}: {response.text}")
-                        
-                except Exception as e:
-                    print(f"  ❌ Error en chunk {i}/{total_chunks}: {str(e)}")
-                
-        except Exception as e:
-            print(f"❌ Error procesando archivo {file['name']}: {str(e)}")
-    
     async def index_documents(self):
         """Indexa documentos utilizando procesamiento optimizado con async y multihilo"""
         print("🚀 Iniciando indexación optimizada de documentos...")
         
         # Obtener ID de la carpeta desde variables de entorno
         folder_id = GOOGLE_DRIVE_FOLDER_ID
-        if not folder_id:
-            print("❌ Error: No se especificó GOOGLE_DRIVE_FOLDER_ID en las variables de entorno")
-            return
-        
+
         try:
             # 1. Listar archivos en la carpeta
             files = self.drive_service.files().list(
@@ -450,7 +389,7 @@ class IndexerAgent:
             params = {
                 "query_embedding": query_embedding,
                 "match_threshold": 0.8,  
-                "match_count": 8
+                "match_count": 6
             }
             
             print(f"📤 Llamando match_tfinal con parámetros:")
