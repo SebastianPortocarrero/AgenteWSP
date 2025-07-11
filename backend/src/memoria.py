@@ -1,10 +1,301 @@
 import time
 import json
-from typing import List, Dict, Any
-from datetime import datetime
+import sqlite3
+import pickle
+import gzip
+import os
+from typing import List, Dict, Any, Optional
+from datetime import datetime, timedelta
+from threading import Lock, Timer
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.schema import BaseMessage, HumanMessage, AIMessage, SystemMessage
 from utilidades import SUPABASE_URL, SUPABASE_KEY, get_supabase_headers, make_supabase_request
+# ============================================================================
+# 💾 CAPA DE PERSISTENCIA LOCAL
+# ============================================================================
+
+class LocalMemoryPersistence:
+    """Capa de persistencia local para memoria de largo plazo"""
+    
+    def __init__(self, base_path: str = "memory_data"):
+        self.base_path = base_path
+        self.db_path = os.path.join(base_path, "memory.db")
+        self.lock = Lock()
+        self._ensure_directory()
+        self._init_local_db()
+    
+    def _ensure_directory(self):
+        """Crear directorio si no existe"""
+        os.makedirs(self.base_path, exist_ok=True)
+    
+    def _init_local_db(self):
+        """Inicializar base de datos local SQLite"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            
+            # Tabla para memoria episódica
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS episodic_memory (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    session_id TEXT NOT NULL,
+                    message_type TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    metadata TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    synced_to_remote BOOLEAN DEFAULT FALSE
+                )
+            """)
+            
+            # Tabla para memoria semántica
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS semantic_memory (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    session_id TEXT NOT NULL,
+                    concept TEXT NOT NULL,
+                    knowledge TEXT NOT NULL,
+                    category TEXT DEFAULT 'general',
+                    confidence REAL DEFAULT 1.0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    synced_to_remote BOOLEAN DEFAULT FALSE
+                )
+            """)
+            
+            # Tabla para memoria procedimental
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS procedural_memory (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    session_id TEXT NOT NULL,
+                    procedure_name TEXT NOT NULL,
+                    steps TEXT NOT NULL,
+                    context TEXT DEFAULT '',
+                    success_rate REAL DEFAULT 1.0,
+                    usage_count INTEGER DEFAULT 1,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    last_used TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    synced_to_remote BOOLEAN DEFAULT FALSE
+                )
+            """)
+            
+            # Tabla para metadatos de sesión
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS session_metadata (
+                    session_id TEXT PRIMARY KEY,
+                    last_activity TIMESTAMP,
+                    total_messages INTEGER DEFAULT 0,
+                    compressed_backup TEXT,
+                    backup_timestamp TIMESTAMP
+                )
+            """)
+            
+            # Crear índices
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_episodic_session ON episodic_memory(session_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_semantic_session ON semantic_memory(session_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_procedural_session ON procedural_memory(session_id)")
+            
+            conn.commit()
+    
+    def save_episodic_message(self, session_id: str, message_type: str, content: str, metadata: Dict = None) -> int:
+        """Guardar mensaje episódico localmente"""
+        with self.lock:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    INSERT INTO episodic_memory (session_id, message_type, content, metadata)
+                    VALUES (?, ?, ?, ?)
+                """, (session_id, message_type, content, json.dumps(metadata or {})))
+                
+                message_id = cursor.lastrowid
+                self._update_session_activity(session_id, cursor)
+                conn.commit()
+                return message_id
+    
+    def save_semantic_knowledge(self, session_id: str, concept: str, knowledge: str, 
+                               category: str = "general", confidence: float = 1.0) -> int:
+        """Guardar conocimiento semántico localmente"""
+        with self.lock:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    INSERT OR REPLACE INTO semantic_memory 
+                    (session_id, concept, knowledge, category, confidence, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (session_id, concept, knowledge, category, confidence, datetime.now()))
+                
+                knowledge_id = cursor.lastrowid
+                conn.commit()
+                return knowledge_id
+    
+    def save_procedural_knowledge(self, session_id: str, procedure_name: str, steps: List[str],
+                                 context: str = "", success_rate: float = 1.0) -> int:
+        """Guardar procedimiento localmente"""
+        with self.lock:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    INSERT OR REPLACE INTO procedural_memory 
+                    (session_id, procedure_name, steps, context, success_rate, last_used)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (session_id, procedure_name, json.dumps(steps), context, success_rate, datetime.now()))
+                
+                proc_id = cursor.lastrowid
+                conn.commit()
+                return proc_id
+    
+    def get_episodic_messages(self, session_id: str, limit: int = None) -> List[Dict]:
+        """Recuperar mensajes episódicos"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            query = "SELECT * FROM episodic_memory WHERE session_id = ? ORDER BY created_at ASC"
+            if limit:
+                query += f" LIMIT {limit}"
+            
+            cursor.execute(query, (session_id,))
+            columns = [description[0] for description in cursor.description]
+            return [dict(zip(columns, row)) for row in cursor.fetchall()]
+    
+    def get_semantic_knowledge(self, session_id: str, concept: str = None, category: str = None) -> List[Dict]:
+        """Recuperar conocimiento semántico"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            query = "SELECT * FROM semantic_memory WHERE session_id = ?"
+            params = [session_id]
+            
+            if concept:
+                query += " AND concept LIKE ?"
+                params.append(f"%{concept}%")
+            if category:
+                query += " AND category = ?"
+                params.append(category)
+            
+            cursor.execute(query, params)
+            columns = [description[0] for description in cursor.description]
+            return [dict(zip(columns, row)) for row in cursor.fetchall()]
+    
+    def get_procedural_knowledge(self, session_id: str, procedure_name: str = None) -> List[Dict]:
+        """Recuperar conocimiento procedimental"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            query = "SELECT * FROM procedural_memory WHERE session_id = ?"
+            params = [session_id]
+            
+            if procedure_name:
+                query += " AND procedure_name LIKE ?"
+                params.append(f"%{procedure_name}%")
+            
+            cursor.execute(query, params)
+            columns = [description[0] for description in cursor.description]
+            results = []
+            for row in cursor.fetchall():
+                data = dict(zip(columns, row))
+                data['steps'] = json.loads(data['steps'])
+                results.append(data)
+            return results
+    
+    def create_compressed_backup(self, session_id: str) -> str:
+        """Crear backup comprimido de una sesión"""
+        session_data = {
+            'episodic': self.get_episodic_messages(session_id),
+            'semantic': self.get_semantic_knowledge(session_id),
+            'procedural': self.get_procedural_knowledge(session_id),
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        # Comprimir datos
+        compressed_data = gzip.compress(pickle.dumps(session_data))
+        
+        # Guardar en metadatos
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT OR REPLACE INTO session_metadata 
+                (session_id, compressed_backup, backup_timestamp)
+                VALUES (?, ?, ?)
+            """, (session_id, compressed_data, datetime.now()))
+            conn.commit()
+        
+        return f"Backup creado: {len(compressed_data)} bytes"
+    
+    def restore_from_backup(self, session_id: str) -> bool:
+        """Restaurar sesión desde backup"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT compressed_backup FROM session_metadata WHERE session_id = ?",
+                (session_id,)
+            )
+            result = cursor.fetchone()
+            
+            if not result or not result[0]:
+                return False
+            
+            # Descomprimir y restaurar
+            try:
+                session_data = pickle.loads(gzip.decompress(result[0]))
+                
+                # Restaurar datos (solo si no existen)
+                for msg in session_data['episodic']:
+                    self.save_episodic_message(
+                        session_id, msg['message_type'], msg['content'], 
+                        json.loads(msg['metadata'])
+                    )
+                
+                for knowledge in session_data['semantic']:
+                    self.save_semantic_knowledge(
+                        session_id, knowledge['concept'], knowledge['knowledge'],
+                        knowledge['category'], knowledge['confidence']
+                    )
+                
+                for proc in session_data['procedural']:
+                    self.save_procedural_knowledge(
+                        session_id, proc['procedure_name'], proc['steps'],
+                        proc['context'], proc['success_rate']
+                    )
+                
+                return True
+            except Exception as e:
+                print(f"Error restaurando backup: {e}")
+                return False
+    
+    def _update_session_activity(self, session_id: str, cursor):
+        """Actualizar actividad de sesión"""
+        cursor.execute("""
+            INSERT OR REPLACE INTO session_metadata 
+            (session_id, last_activity, total_messages)
+            VALUES (?, ?, COALESCE(
+                (SELECT total_messages FROM session_metadata WHERE session_id = ?), 0
+            ) + 1)
+        """, (session_id, datetime.now(), session_id))
+    
+    def cleanup_old_sessions(self, days_old: int = 30) -> int:
+        """Limpiar sesiones antiguas"""
+        cutoff_date = datetime.now() - timedelta(days=days_old)
+        
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            
+            # Obtener sesiones a limpiar
+            cursor.execute(
+                "SELECT session_id FROM session_metadata WHERE last_activity < ?",
+                (cutoff_date,)
+            )
+            old_sessions = [row[0] for row in cursor.fetchall()]
+            
+            # Crear backups antes de limpiar
+            for session_id in old_sessions:
+                self.create_compressed_backup(session_id)
+            
+            # Limpiar datos
+            cursor.execute("DELETE FROM episodic_memory WHERE session_id IN ({})".format(
+                ','.join(['?' for _ in old_sessions])), old_sessions)
+            cursor.execute("DELETE FROM semantic_memory WHERE session_id IN ({})".format(
+                ','.join(['?' for _ in old_sessions])), old_sessions)
+            cursor.execute("DELETE FROM procedural_memory WHERE session_id IN ({})".format(
+                ','.join(['?' for _ in old_sessions])), old_sessions)
+            
+            conn.commit()
+            return len(old_sessions)
+
 # ============================================================================
 # 📚 MEMORIA EPISÓDICA - Conversaciones y eventos temporales
 # ============================================================================
@@ -12,13 +303,28 @@ from utilidades import SUPABASE_URL, SUPABASE_KEY, get_supabase_headers, make_su
 class EpisodicMemory:
     """Memoria episódica: almacena conversaciones completas con contexto temporal"""
     
-    def __init__(self, session_id: str, table_name: str = "chat_history"):
+    def __init__(self, session_id: str, table_name: str = "chat_history", local_persistence: LocalMemoryPersistence = None):
         self.session_id = session_id
         self.table_name = table_name
+        self.local_persistence = local_persistence or LocalMemoryPersistence()
+        self._message_cache = {}
+        self._cache_ttl = 300  # 5 minutos
     
     @property
     def messages(self) -> List[BaseMessage]:
-        """Obtiene todos los mensajes episódicos para esta sesión"""
+        """Obtiene todos los mensajes episódicos para esta sesión con fallback local"""
+        cache_key = f"messages_{self.session_id}"
+        current_time = time.time()
+        
+        # Verificar caché
+        if cache_key in self._message_cache:
+            cached_data, cache_time = self._message_cache[cache_key]
+            if current_time - cache_time < self._cache_ttl:
+                return cached_data
+        
+        messages = []
+        
+        # Intentar obtener desde Supabase primero
         try:
             response = make_supabase_request(
                 method="GET",
@@ -31,7 +337,6 @@ class EpisodicMemory:
             
             if response.status_code == 200:
                 records = response.json()
-                messages = []
                 for record in records:
                     message_data = record.get('content', {})
                     message_type = record.get('message_type', 'human')
@@ -43,36 +348,65 @@ class EpisodicMemory:
                     elif message_type == 'system':
                         messages.append(SystemMessage(content=message_data.get('content', '')))
                 
+                # Guardar en caché
+                self._message_cache[cache_key] = (messages, current_time)
                 return messages
-            else:
-                print(f"Error obteniendo mensajes episódicos: {response.status_code}")
-                return []
                 
         except Exception as e:
-            print(f"Error en memoria episódica: {str(e)}")
+            print(f"Error conectando con Supabase, usando backup local: {str(e)}")
+        
+        # Fallback a persistencia local
+        try:
+            local_messages = self.local_persistence.get_episodic_messages(self.session_id)
+            for record in local_messages:
+                message_type = record['message_type']
+                content = record['content']
+                
+                if message_type == 'human':
+                    messages.append(HumanMessage(content=content))
+                elif message_type == 'ai':
+                    messages.append(AIMessage(content=content))
+                elif message_type == 'system':
+                    messages.append(SystemMessage(content=content))
+            
+            # Guardar en caché
+            self._message_cache[cache_key] = (messages, current_time)
+            return messages
+            
+        except Exception as e:
+            print(f"Error en fallback local: {str(e)}")
             return []
     
     def add_message(self, message: BaseMessage, context: Dict = None) -> None:
-        """Añade un mensaje episódico con contexto temporal"""
+        """Añade un mensaje episódico con contexto temporal y persistencia dual"""
+        # Determinar el tipo de mensaje
+        if isinstance(message, HumanMessage):
+            message_type = 'human'
+        elif isinstance(message, AIMessage):
+            message_type = 'ai'
+        elif isinstance(message, SystemMessage):
+            message_type = 'system'
+        else:
+            message_type = 'unknown'
+        
+        # Metadata episódica enriquecida
+        episodic_metadata = {
+            "timestamp": datetime.now().isoformat(),
+            "context": context or {},
+            "message_length": len(message.content),
+            "session_id": self.session_id
+        }
+        
+        # Guardar localmente SIEMPRE primero
         try:
-            # Determinar el tipo de mensaje
-            if isinstance(message, HumanMessage):
-                message_type = 'human'
-            elif isinstance(message, AIMessage):
-                message_type = 'ai'
-            elif isinstance(message, SystemMessage):
-                message_type = 'system'
-            else:
-                message_type = 'unknown'
-            
-            # Metadata episódica enriquecida
-            episodic_metadata = {
-                "timestamp": datetime.now().isoformat(),
-                "context": context or {},
-                "message_length": len(message.content),
-                "session_id": self.session_id
-            }
-            
+            self.local_persistence.save_episodic_message(
+                self.session_id, message_type, message.content, episodic_metadata
+            )
+        except Exception as e:
+            print(f"Error guardando mensaje local: {str(e)}")
+        
+        # Intentar guardar en Supabase
+        try:
             data = {
                 "session_id": self.session_id,
                 "message_type": message_type,
@@ -88,10 +422,15 @@ class EpisodicMemory:
             )
             
             if response.status_code != 201:
-                print(f"Error guardando mensaje episódico: {response.status_code}")
+                print(f"Error guardando mensaje en Supabase: {response.status_code}, usando solo local")
                 
         except Exception as e:
-            print(f"Error en add_message episódico: {str(e)}")
+            print(f"Error conectando con Supabase: {str(e)}, mensaje guardado localmente")
+        
+        # Invalidar caché
+        cache_key = f"messages_{self.session_id}"
+        if cache_key in self._message_cache:
+            del self._message_cache[cache_key]
     
     def get_conversation_summary(self) -> Dict[str, Any]:
         """Obtiene un resumen de la conversación episódica"""
@@ -129,12 +468,24 @@ class EpisodicMemory:
 class SemanticMemory:
     """Memoria semántica: almacena conocimiento, hechos y conceptos aprendidos"""
     
-    def __init__(self, session_id: str, table_name: str = "semantic_memory"):
+    def __init__(self, session_id: str, table_name: str = "semantic_memory", local_persistence: LocalMemoryPersistence = None):
         self.session_id = session_id
         self.table_name = table_name
+        self.local_persistence = local_persistence or LocalMemoryPersistence()
+        self._knowledge_cache = {}
+        self._cache_ttl = 600  # 10 minutos
     
     def store_knowledge(self, concept: str, knowledge: str, category: str = "general", confidence: float = 1.0) -> None:
-        """Almacena conocimiento semántico"""
+        """Almacena conocimiento semántico con persistencia dual"""
+        # Guardar localmente SIEMPRE primero
+        try:
+            self.local_persistence.save_semantic_knowledge(
+                self.session_id, concept, knowledge, category, confidence
+            )
+        except Exception as e:
+            print(f"Error guardando conocimiento local: {str(e)}")
+        
+        # Intentar guardar en Supabase
         try:
             data = {
                 "session_id": self.session_id,
@@ -155,10 +506,13 @@ class SemanticMemory:
             if response.status_code == 201:
                 print(f"🧠 Conocimiento semántico guardado: {concept}")
             else:
-                print(f"Error guardando conocimiento semántico: {response.status_code}")
+                print(f"Error guardando en Supabase: {response.status_code}, usando solo local")
                 
         except Exception as e:
-            print(f"Error en store_knowledge: {str(e)}")
+            print(f"Error conectando con Supabase: {str(e)}, conocimiento guardado localmente")
+        
+        # Invalidar caché
+        self._knowledge_cache.clear()
     
     def get_knowledge(self, concept: str = None, category: str = None) -> List[Dict]:
         """Recupera conocimiento semántico"""
@@ -274,9 +628,12 @@ class SemanticMemory:
 class ProceduralMemory:
     """Memoria procedimental: almacena procedimientos, workflows y patrones de resolución"""
     
-    def __init__(self, session_id: str, table_name: str = "procedural_memory"):
+    def __init__(self, session_id: str, table_name: str = "procedural_memory", local_persistence: LocalMemoryPersistence = None):
         self.session_id = session_id
         self.table_name = table_name
+        self.local_persistence = local_persistence or LocalMemoryPersistence()
+        self._procedure_cache = {}
+        self._cache_ttl = 600  # 10 minutos
     
     def store_procedure(self, procedure_name: str, steps: List[str], context: str = "", success_rate: float = 1.0) -> None:
         """Almacena un procedimiento o workflow"""
@@ -477,11 +834,14 @@ class ProceduralMemory:
 # ============================================================================
 
 class AdvancedMemorySystem:
-    """Sistema avanzado que integra memoria episódica, semántica y procedimental"""
+    """Sistema avanzado que integra memoria episódica, semántica y procedimental con persistencia mejorada"""
     
     def __init__(self, session_id: str, short_term_k: int = 10):
         self.session_id = session_id
         self.short_term_k = short_term_k
+        
+        # Capa de persistencia compartida
+        self.local_persistence = LocalMemoryPersistence()
         
         # Memoria a corto plazo (RAM) - compatible con langchain 0.1.14
         self.short_term_memory = ConversationBufferWindowMemory(
@@ -492,10 +852,16 @@ class AdvancedMemorySystem:
             k=short_term_k
         )
         
-        # Memorias a largo plazo especializadas
-        self.episodic_memory = EpisodicMemory(session_id)
-        self.semantic_memory = SemanticMemory(session_id)
-        self.procedural_memory = ProceduralMemory(session_id)
+        # Memorias a largo plazo especializadas con persistencia compartida
+        self.episodic_memory = EpisodicMemory(session_id, local_persistence=self.local_persistence)
+        self.semantic_memory = SemanticMemory(session_id, local_persistence=self.local_persistence)
+        self.procedural_memory = ProceduralMemory(session_id, local_persistence=self.local_persistence)
+        
+        # Sistema de backup automático
+        self._setup_auto_backup()
+        
+        # Restaurar desde backup si es necesario
+        self._restore_if_needed()
         
         # Cargar mensajes existentes
         self._load_recent_messages()
@@ -504,6 +870,34 @@ class AdvancedMemorySystem:
         print(f"  📚 Memoria Episódica: Conversaciones y eventos")
         print(f"  🧠 Memoria Semántica: Conocimiento y conceptos")
         print(f"  ⚙️ Memoria Procedimental: Workflows y procedimientos")
+        print(f"  💾 Persistencia Local: Backup automático habilitado")
+    
+    def _setup_auto_backup(self):
+        """Configurar backup automático cada 30 minutos"""
+        def create_backup():
+            try:
+                result = self.local_persistence.create_compressed_backup(self.session_id)
+                print(f"🔄 Backup automático creado: {result}")
+                # Programar siguiente backup
+                Timer(1800, create_backup).start()  # 30 minutos
+            except Exception as e:
+                print(f"Error en backup automático: {e}")
+                # Reintentar en 5 minutos
+                Timer(300, create_backup).start()
+        
+        # Iniciar primer backup en 30 segundos
+        Timer(30, create_backup).start()
+    
+    def _restore_if_needed(self):
+        """Restaurar desde backup si no hay datos recientes"""
+        try:
+            messages = self.local_persistence.get_episodic_messages(self.session_id, limit=1)
+            if not messages:
+                # No hay mensajes, intentar restaurar desde backup
+                if self.local_persistence.restore_from_backup(self.session_id):
+                    print(f"🔄 Sesión {self.session_id} restaurada desde backup")
+        except Exception as e:
+            print(f"Error verificando necesidad de restauración: {e}")
     
     def _load_recent_messages(self):
         """Carga los mensajes más recientes en la memoria a corto plazo"""
@@ -610,12 +1004,37 @@ class AdvancedMemorySystem:
 # ============================================================================
 
 class AdvancedMemoryManager:
-    """Gestor avanzado de memoria que maneja múltiples sesiones"""
+    """Gestor avanzado de memoria que maneja múltiples sesiones con persistencia mejorada"""
     
     def __init__(self):
         self.active_sessions: Dict[str, AdvancedMemorySystem] = {}
         self.last_activity: Dict[str, float] = {}
-        self.cleanup_interval = 3600  # 1 hora
+        self.cleanup_interval = 7200  # 2 horas (aumentado)
+        self.local_persistence = LocalMemoryPersistence()
+        
+        # Configurar limpieza automática
+        self._setup_periodic_cleanup()
+    
+    def _setup_periodic_cleanup(self):
+        """Configurar limpieza periódica de sesiones"""
+        def periodic_cleanup():
+            try:
+                # Limpiar sesiones inactivas de RAM
+                self.cleanup_inactive_sessions()
+                
+                # Limpiar datos antiguos de base local
+                cleaned = self.local_persistence.cleanup_old_sessions(30)
+                if cleaned > 0:
+                    print(f"🧹 Limpieza automática: {cleaned} sesiones archivadas")
+                
+                # Programar siguiente limpieza
+                Timer(3600, periodic_cleanup).start()  # 1 hora
+            except Exception as e:
+                print(f"Error en limpieza periódica: {e}")
+                Timer(1800, periodic_cleanup).start()  # Reintentar en 30 min
+        
+        # Iniciar primera limpieza en 1 hora
+        Timer(3600, periodic_cleanup).start()
     
     def get_memory_for_session(self, session_id: str, short_term_k: int = 10) -> AdvancedMemorySystem:
         """Obtiene o crea un sistema de memoria avanzado para una sesión"""
@@ -629,7 +1048,7 @@ class AdvancedMemoryManager:
         return self.active_sessions[session_id]
     
     def cleanup_inactive_sessions(self):
-        """Limpia sesiones inactivas"""
+        """Limpia sesiones inactivas de RAM (los datos persisten localmente)"""
         current_time = time.time()
         inactive_sessions = []
         
@@ -639,9 +1058,17 @@ class AdvancedMemoryManager:
         
         for session_id in inactive_sessions:
             if session_id in self.active_sessions:
-                print(f"🧹 Limpiando sesión inactiva: {session_id}")
+                # Crear backup antes de limpiar de RAM
+                try:
+                    self.active_sessions[session_id].local_persistence.create_compressed_backup(session_id)
+                    print(f"🧹 Sesión {session_id} guardada y removida de RAM")
+                except Exception as e:
+                    print(f"Error creando backup para {session_id}: {e}")
+                
                 del self.active_sessions[session_id]
                 del self.last_activity[session_id]
+        
+        return len(inactive_sessions)
 
 # Instancia global del gestor avanzado
 advanced_memory_manager = AdvancedMemoryManager()

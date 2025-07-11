@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, createContext, useContext } from 'react';
 import { Settings } from 'lucide-react';
 import LoginForm from './components/LoginForm';
-import { mockConversations, quickResponses, mockNotifications } from './data/mockData';
+import { quickResponses } from './data/mockData';
 import { Conversation, Message, SenderMode, QuickResponse, ConversationFilters, Notification } from './types';
 import apiService from './services/api';
 import ConversationMonitor from './components/ConversationMonitor';
@@ -21,7 +21,7 @@ function App() {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showSettings, setShowSettings] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginError, setLoginError] = useState('');
@@ -133,6 +133,8 @@ function App() {
     const token = localStorage.getItem('tony-auth-token');
     if (token) {
       setIsAuthenticated(true);
+    } else {
+      setIsAuthenticated(false);
     }
   }, []);
 
@@ -160,13 +162,26 @@ function App() {
   };
 
   // Función de logout
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
+    console.log('🔄 Ejecutando logout...');
+    
+    // Limpiar localStorage
     localStorage.removeItem('tony-auth-token');
+    
+    // Resetear todos los estados
     setIsAuthenticated(false);
     setSelectedConversationId(null);
     setSearchTerm('');
     setActiveFilters({ status: '', dateRange: '', tags: [], operator: '' });
-  };
+    setLoginError('');
+    setConversations([]);
+    setNotifications([]);
+    setIsConnected(false);
+    setIsLoading(false);
+    setIsLoggingIn(false);
+    
+    console.log('✅ Logout completado');
+  }, []);
 
   // Cargar datos iniciales y configurar polling
   useEffect(() => {
@@ -191,8 +206,8 @@ function App() {
       } catch (error) {
         console.error('Error loading initial data:', error);
         setIsConnected(false);
-        // Usar datos mock como fallback
-        setConversations(mockConversations);
+        // Sin datos mock, mantener array vacío
+        setConversations([]);
       } finally {
         setIsLoading(false);
       }
@@ -210,9 +225,36 @@ function App() {
     const interval = setInterval(async () => {
       try {
         const conversationsData = await apiService.getConversations();
-        setConversations(conversationsData);
         
-        // Las notificaciones del polling se mantienen como están
+        // Detectar nuevos mensajes comparando con el estado anterior
+        const currentConversations = conversations;
+        conversationsData.forEach(newConv => {
+          const oldConv = currentConversations.find(c => c.id === newConv.id);
+          
+          // Si hay mensajes nuevos y no es la conversación actualmente seleccionada
+          if (oldConv && newConv.messages.length > oldConv.messages.length && newConv.id !== selectedConversationId) {
+            const newMessages = newConv.messages.slice(oldConv.messages.length);
+            
+            // Crear notificaciones para cada mensaje nuevo del usuario
+            newMessages.forEach(message => {
+              if (message.sender === 'user') {
+                const notification: Notification = {
+                  id: `msg-${message.id}-${Date.now()}`,
+                  title: `Nuevo mensaje de ${newConv.user.name}`,
+                  message: message.content.length > 50 ? message.content.substring(0, 50) + '...' : message.content,
+                  type: 'info',
+                  timestamp: new Date(),
+                  read: false,
+                  conversationId: newConv.id
+                };
+                
+                setNotifications(prev => [notification, ...prev]);
+              }
+            });
+          }
+        });
+        
+        setConversations(conversationsData);
       } catch (error) {
         console.error('Error updating conversations:', error);
         setIsConnected(false);
@@ -220,7 +262,7 @@ function App() {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [isConnected, isAuthenticated]);
+  }, [isConnected, isAuthenticated, conversations, selectedConversationId]);
 
   const handleSendMessage = useCallback(async (content: string, sender: SenderMode) => {
     if (!selectedConversationId || !isConnected) return;

@@ -1,0 +1,15 @@
+# Archivos que no deben provocar reload
+*.db
+*.log
+test_*.py
+*_test.py
+__pycache__/
+*.pyc
+memory_data/
+messages.db
+*.sqlite
+*.backup
+venv/
+.env
+config/token.json
+.git/

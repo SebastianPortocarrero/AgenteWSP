@@ -15,61 +15,9 @@ from indexador import DocumentIndexer
 import time
 import uuid
 from models import HealthResponse, UserStatsResponse, UserStatsModel
-# from web_api import web_api, sync_whatsapp_message, conv_manager  # Temporal: web_api necesita migración a FastAPI
+from web_api import web_api, sync_whatsapp_message, conv_manager
 
-# Implementaciones temporales hasta migrar web_api completamente
-class TempConversationManager:
-    def __init__(self):
-        self.conversations = {}
-        self.processed_messages = set()  # Para evitar mensajes duplicados
-    
-    def get_conversation(self, conversation_id: str):
-        return self.conversations.get(conversation_id)
-    
-    def add_message(self, conversation_id: str, content: str, sender: str):
-        if conversation_id not in self.conversations:
-            self.conversations[conversation_id] = {
-                "id": conversation_id,
-                "messages": [],
-                "mode": "auto",  
-                "status": "active",
-                "unreadCount": 0,
-                "operator_id": None
-            }
-        
-        message = {
-            "id": str(uuid.uuid4()),
-            "content": content,
-            "sender": sender,
-            "timestamp": time.time()
-        }
-        
-        self.conversations[conversation_id]["messages"].append(message)
-        
-        # Incrementar contador de no leídos si es mensaje del usuario
-        if sender == "user":
-            self.conversations[conversation_id]["unreadCount"] += 1
-            
-        return message
-    
-    def mark_as_read(self, conversation_id: str):
-        if conversation_id in self.conversations:
-            self.conversations[conversation_id]["unreadCount"] = 0
-    
-    def is_message_processed(self, message_id: str) -> bool:
-        return message_id in self.processed_messages
-    
-    def mark_message_processed(self, message_id: str):
-        self.processed_messages.add(message_id)
-
-def sync_whatsapp_message(phone_number: str, message_text: str, sender: str = "user"):
-    """Función temporal para sincronizar mensajes de WhatsApp"""
-    conversation_id = f"whatsapp_{phone_number}"
-    conv_manager.add_message(conversation_id, message_text, sender)
-    return conversation_id
-
-# Instancia temporal del manager
-conv_manager = TempConversationManager()
+# Ya no necesitamos TempConversationManager, usamos el de web_api
 
 # Cargar variables de entorno
 load_dotenv("config/.env")
@@ -260,8 +208,8 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 # Usar ORJSONResponse por defecto para mejor rendimiento
 app.default_response_class = ORJSONResponse
 
-# Incluir el blueprint de APIs web
-# app.register_blueprint(web_api, url_prefix="/api")  # Temporal: web_api necesita migración a FastAPI
+# Incluir las rutas de web_api en FastAPI
+app.include_router(web_api)
 
 @app.get("/health", response_model=HealthResponse)
 async def health():
@@ -519,8 +467,12 @@ async def get_conversations():
             # Calcular tiempo desde última actividad
             last_message_time = conversation["messages"][-1]["timestamp"] if conversation["messages"] else current_time
             
-            # Contar mensajes no leídos (simulado)
-            unread_count = len([msg for msg in conversation["messages"] if msg["sender"] == "user"]) if conversation.get("status") == "pending" else 0
+            # Contar mensajes no leídos desde la última marca de lectura
+            last_read_timestamp = conversation.get("last_read_timestamp", 0)
+            unread_count = len([
+                msg for msg in conversation["messages"] 
+                if msg["sender"] == "user" and msg["timestamp"] > last_read_timestamp
+            ])
             
             phone_number = conv_id.replace("whatsapp_", "")
             customer_name = phone_number.replace("51", "")
@@ -573,7 +525,8 @@ async def get_conversations():
                     "unreadCount": 0,
                     "tags": ["consultas", "cursos"],
                     "assignedOperator": None,
-                    "pending_response": None
+                    "pending_response": None,
+                    "last_read_timestamp": demo_time + 60
                 },
                 {
                     "id": "demo_conversation_2",
@@ -602,7 +555,8 @@ async def get_conversations():
                     "unreadCount": 1,
                     "tags": ["rrhh", "políticas"],
                     "assignedOperator": "operador_1",
-                    "pending_response": None
+                    "pending_response": None,
+                    "last_read_timestamp": demo_time - 2000
                 }
             ]
         
@@ -620,7 +574,12 @@ async def get_conversation(conversation_id: str):
         
         current_time = time.time()
         last_message_time = conversation["messages"][-1]["timestamp"] if conversation["messages"] else current_time
-        unread_count = len([msg for msg in conversation["messages"] if msg["sender"] == "user"]) if conversation.get("status") == "pending" else 0
+        # Contar mensajes no leídos desde la última marca de lectura
+        last_read_timestamp = conversation.get("last_read_timestamp", 0)
+        unread_count = len([
+            msg for msg in conversation["messages"] 
+            if msg["sender"] == "user" and msg["timestamp"] > last_read_timestamp
+        ])
         
         phone_number = conversation_id.replace("whatsapp_", "")
         customer_name = phone_number.replace("51", "")
@@ -867,24 +826,39 @@ async def get_quick_responses():
 
 def run_server():
     """Inicia el servidor principal."""
+    import os
+    is_development = os.getenv("ENVIRONMENT", "development").lower() == "development"
+    
     print("\n🤖 Tony - Asistente de RRHH (FastAPI)")
-    print("=" * 40)
-    print("🚀 Iniciando servidor...")
+    print("=" * 50)
+    if is_development:
+        print("🔧 MODO DESARROLLO ACTIVADO")
+        print("   • Auto-reload habilitado")
+        print("   • Logs detallados")
+        print("   • Archivos de prueba excluidos del reload")
+    else:
+        print("🚀 MODO PRODUCCIÓN")
+        print("   • Auto-reload deshabilitado")
+        print("   • Máxima estabilidad")
+    
     print("📍 Servidor corriendo en http://localhost:8000")
-    print("📱 Esperando mensajes...")
+    print("📱 Esperando mensajes de WhatsApp...")
     print("🎯 SISTEMA MULTI-USUARIO ACTIVADO")
     print("   • Cada usuario tendrá su propia memoria")
     print("   • Limpieza automática de usuarios inactivos")
+    print("   • Persistencia en SQLite + Supabase")
     print("   • Estadísticas en: http://localhost:8000/users/stats")
     print("   • Documentación API: http://localhost:8000/docs")
     print("   • Redoc: http://localhost:8000/redoc")
+    print("=" * 50)
     
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
         port=8000,
-        reload=True,  # Cambiar a True solo para desarrollo
-        log_level="info"
+        reload=is_development,  # Solo reload en desarrollo
+        log_level="info",
+        reload_excludes=["*.db", "*.log", "test_*.py", "memory_data/"] if is_development else None
     )
 
 if __name__ == "__main__":

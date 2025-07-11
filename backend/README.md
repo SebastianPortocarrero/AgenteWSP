@@ -50,7 +50,7 @@ graph TD
 ## 🔧 **Componentes Técnicos**
 
 ### **1. 📱 main.py - Servidor Principal**
-- Servidor **Quart** (async Flask)
+- Servidor **FastAPI** 
 - Webhook para recibir mensajes de WhatsApp
 - Sistema multi-usuario con limpieza automática
 - Endpoints de salud y estadísticas

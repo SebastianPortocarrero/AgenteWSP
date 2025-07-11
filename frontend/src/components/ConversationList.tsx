@@ -134,7 +134,7 @@ const ConversationList = ({
                   </p>
                   
                   <div className="flex items-center space-x-1 ml-2">
-                    {unreadCount > 0 && (
+                    {unreadCount > 0 && selectedConversation !== conversation.id && (
                       <span className="bg-green-500 text-white text-xs font-medium px-2 py-1 rounded-full min-w-[20px] text-center">
                         {unreadCount > 99 ? '99+' : unreadCount}
                       </span>

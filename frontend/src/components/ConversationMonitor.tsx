@@ -18,7 +18,7 @@ const ConversationMonitor = (props: any) => {
     setNotifications,
     showSettings,
     setShowSettings,
-    handleLogout,
+    onLogout,
     searchTerm,
     setSearchTerm,
     activeFilters,
@@ -88,7 +88,7 @@ const ConversationMonitor = (props: any) => {
                   <Settings className="w-5 h-5" />
                 </button>
                 <button
-                  onClick={handleLogout}
+                  onClick={onLogout}
                   title="Cerrar sesión"
                   className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
                 >

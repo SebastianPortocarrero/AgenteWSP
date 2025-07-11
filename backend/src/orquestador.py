@@ -236,11 +236,33 @@ class MainOrchestrator:
         
         # Ejecutar función asíncrona
         try:
-            return asyncio.run(async_func(*args, **kwargs))
-        except RuntimeError:
-            # Si ya estamos en un event loop, usamos nest_asyncio
-            loop = asyncio.get_event_loop()
-            return loop.run_until_complete(async_func(*args, **kwargs))
+            import concurrent.futures
+            import threading
+            
+            # Crear un nuevo thread para ejecutar la función asíncrona
+            def run_in_thread():
+                try:
+                    # Crear un nuevo event loop en el thread
+                    new_loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(new_loop)
+                    try:
+                        result = new_loop.run_until_complete(async_func(*args, **kwargs))
+                        return result
+                    finally:
+                        new_loop.close()
+                except Exception as e:
+                    print(f"❌ Error en thread: {str(e)}")
+                    return f"Error ejecutando {tool_name}: {str(e)}"
+            
+            # Ejecutar en un thread separado
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(run_in_thread)
+                result = future.result(timeout=30)  # Timeout de 30 segundos
+                return result
+                
+        except Exception as e:
+            print(f"❌ Error ejecutando herramienta {tool_name}: {str(e)}")
+            return f"Error al ejecutar {tool_name}: {str(e)}"
     
     def _format_document_results(self, results):
         """Formatea resultados de documentos"""
