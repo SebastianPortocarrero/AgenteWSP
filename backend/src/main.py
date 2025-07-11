@@ -883,7 +883,7 @@ def run_server():
         "main:app",
         host="0.0.0.0",
         port=8000,
-        reload=False,  # Cambiar a True solo para desarrollo
+        reload=True,  # Cambiar a True solo para desarrollo
         log_level="info"
     )
 

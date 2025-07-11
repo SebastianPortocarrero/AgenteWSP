@@ -310,10 +310,11 @@ class MainOrchestrator:
         """
         try:
             # Crear un prompt específico para clasificación
-            classification_prompt = f"""Eres un clasificador especializado en determinar si una consulta es LABORAL o NO LABORAL.
+            classification_prompt = f"""Eres un clasificador especializado en determinar si una consulta es LABORAL(saludos tambien son laborales) o NO LABORAL.
 
 CONSULTAS LABORALES (RESPONDER "LABORAL"):
 ✅ Temas de trabajo, empleo, contratos, sueldos, horarios
+✅ Saludos, bienvenidas, despedidas, etc.
 ✅ Vacaciones, permisos, licencias, días festivos
 ✅ Beneficios laborales, bonificaciones, compensaciones
 ✅ Seguridad social, salud ocupacional, riesgos laborales
