@@ -1,0 +1,83 @@
+name: Deploy to Vercel + Railway
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Test Backend
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install backend dependencies
+      run: |
+        cd backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run backend tests
+      run: |
+        cd backend
+        python -m pytest tests/ -v --tb=short
+      env:
+        PYTHONPATH: ${{ github.workspace }}/backend/src
+
+    # Test Frontend
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install frontend dependencies
+      run: |
+        cd frontend
+        npm ci
+    
+    - name: Build frontend
+      run: |
+        cd frontend
+        npm run build
+      env:
+        VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL_PROD }}
+
+    # Deploy to Railway (Backend)
+    - name: Deploy Backend to Railway
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      uses: bervProject/railway-deploy@v1.2.0
+      with:
+        railway_token: ${{ secrets.RAILWAY_TOKEN }}
+        service: ${{ secrets.RAILWAY_SERVICE_NAME || 'tony-backend' }}
+
+    # Deploy to Vercel (Frontend)
+    - name: Deploy Frontend to Vercel
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      uses: amondnet/vercel-action@v25
+      with:
+        vercel-token: ${{ secrets.VERCEL_TOKEN }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+        working-directory: ./frontend
+        vercel-args: '--prod'
+      env:
+        VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL_PROD }}
+
+    # Notify success
+    - name: Notify deployment success
+      if: success() && github.ref == 'refs/heads/main'
+      run: |
+        echo "🎉 Deployment successful!"
+        echo "Frontend: https://${{ secrets.VERCEL_DOMAIN }}"
+        echo "Backend: https://${{ secrets.RAILWAY_DOMAIN }}"
